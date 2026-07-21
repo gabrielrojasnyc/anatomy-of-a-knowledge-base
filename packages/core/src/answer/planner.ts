@@ -11,7 +11,7 @@ catalog of tools and projects, select the best tools to answer it.
 Reply with ONLY JSON: {"tools": [{"name": "...", "query": "..."}], "reasoning": "one line"}.
 Pick 1 to 3 tools. Rewrite the query per tool when it helps (an exact flag for
 search_code, a topic for who_knows). Prefer plain search unless the question is
-clearly about code text, people, or one specific system.`;
+clearly about code text, people, or one specific system. Questions about policy, retention, ownership, or anything that could span systems always include the plain search tool.`;
 
 export async function plan(
   question: string,

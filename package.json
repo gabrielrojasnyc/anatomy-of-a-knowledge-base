@@ -5,7 +5,11 @@
   "scripts": {
     "kb": "tsx packages/cli/src/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc -b packages/cli"
+    "typecheck": "tsc -b packages/cli",
+    "eval": "tsx eval/run.ts"
+  },
+  "dependencies": {
+    "@kb/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -33,3 +33,5 @@ export type { Tool } from "./answer/tools.js";
 export { plan } from "./answer/planner.js";
 export { ask } from "./answer/ask.js";
 export type { AskResult } from "./answer/ask.js";
+export { loadGolden, gradeQuestion } from "./answer/golden.js";
+export type { GoldenQuestion, Grade } from "./answer/golden.js";
