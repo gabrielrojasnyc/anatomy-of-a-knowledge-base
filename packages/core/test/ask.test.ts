@@ -42,6 +42,17 @@ describe("plan", () => {
     expect(p.tools).toEqual([{ name: "search", query: "anything" }]);
     expect(p.fallback).toBe(true);
   });
+
+  it("falls back when the plan parses but names no known tools", async () => {
+    const llm = async () =>
+      JSON.stringify({
+        tools: [{ name: "nonexistent", query: "x" }],
+        reasoning: "bad plan",
+      });
+    const p = await plan("anything", tools, "catalog", { llm, model: "m" });
+    expect(p.tools).toEqual([{ name: "search", query: "anything" }]);
+    expect(p.fallback).toBe(true);
+  });
 });
 
 describe("ask", () => {

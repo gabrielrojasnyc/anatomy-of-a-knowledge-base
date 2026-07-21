@@ -54,12 +54,13 @@ export async function ask(
 
   const byName = new Map(tools.map((t) => [t.name, t]));
   const settled = await Promise.all(
-    p.tools.map((t) =>
-      byName
-        .get(t.name)!
+    p.tools.map((t) => {
+      const tool = byName.get(t.name);
+      if (!tool) return Promise.resolve([] as EvidenceRow[]);
+      return tool
         .run({ query: t.query, project: opts.project })
-        .catch(() => [] as EvidenceRow[]),
-    ),
+        .catch(() => [] as EvidenceRow[]);
+    }),
   );
   const evidence = settled.flat().slice(0, 20);
 
