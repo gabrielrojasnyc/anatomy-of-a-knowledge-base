@@ -62,4 +62,10 @@ describe("search", () => {
     expect(trace.rerank.applied).toBe(true);
     expect(trace.rerank.scores.length).toBeGreaterThan(0);
   });
+
+  it("throws on an unknown project", async () => {
+    await expect(search(pool, "anything", { project: "typo" })).rejects.toThrow(
+      /unknown project/,
+    );
+  });
 });

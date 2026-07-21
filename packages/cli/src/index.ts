@@ -142,7 +142,7 @@ program
         const { evidence, trace } = await search(pool, query, {
           project: opts.project,
           llm,
-          fixturesDir: join(process.cwd(), "fixtures"),
+          fixturesDir: FIXTURES,
         });
         if (opts.explain) {
           for (const list of trace.lists) {
@@ -209,7 +209,7 @@ program
         }
         const result = await ask(pool, question, {
           project: opts.project,
-          fixturesDir: join(process.cwd(), "fixtures"),
+          fixturesDir: FIXTURES,
           llm,
         });
         if (opts.trace) {
@@ -245,7 +245,7 @@ program
     const pool = getPool();
     try {
       const tools = buildTools(pool, {
-        fixturesDir: join(process.cwd(), "fixtures"),
+        fixturesDir: FIXTURES,
       });
       const rows = await tools
         .find((t) => t.name === "who_knows")!

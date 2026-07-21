@@ -48,6 +48,10 @@ export async function search(
   const sources = opts.project
     ? await projectSources(pool, opts.project)
     : null;
+  if (opts.project && sources && sources.length === 0)
+    throw new Error(
+      `unknown project "${opts.project}" (no sources configured)`,
+    );
   const scope = sources ?? undefined;
   const qvec = await embedQuery(query);
 
@@ -140,10 +144,12 @@ export async function search(
       })),
       rerank: {
         applied,
-        scores: [...rerankScores.entries()].map(([k, score]) => ({
-          sourceId: k.split(":").slice(1).join(":"),
-          score,
-        })),
+        scores: [...rerankScores.entries()]
+          .map(([k, score]) => ({
+            sourceId: k.split(":").slice(1).join(":"),
+            score,
+          }))
+          .sort((a, b) => b.score - a.score),
       },
       expanded,
     },

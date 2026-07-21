@@ -26,8 +26,16 @@ if (live && !llm) {
 
 const questions = loadGolden(join(ROOT, "eval/golden.json"));
 let passed = 0;
+const dbLabel = (() => {
+  try {
+    const u = new URL(cfg.databaseUrl);
+    return `${u.host}${u.pathname}`;
+  } catch {
+    return "(unparseable url)";
+  }
+})();
 console.log(
-  `golden eval, ${live ? "live rerank" : "retrieval only"}, db: ${cfg.databaseUrl}\n`,
+  `golden eval, ${live ? "live rerank" : "retrieval only"}, db: ${dbLabel}\n`,
 );
 for (const q of questions) {
   const g = await gradeQuestion(pool, q, {
