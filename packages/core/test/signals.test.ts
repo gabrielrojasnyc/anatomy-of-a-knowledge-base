@@ -26,11 +26,8 @@ describe("rareTokenRetriever", () => {
     );
   });
 
-  it("returns an empty list for filler-only queries", async () => {
-    const list = await rareTokenRetriever(
-      pool,
-      "sounds good thanks will try that",
-    );
+  it("returns an empty list when every query token is common", async () => {
+    const list = await rareTokenRetriever(pool, "helios checkpoint restore");
     expect(list.docs).toEqual([]);
   });
 });
