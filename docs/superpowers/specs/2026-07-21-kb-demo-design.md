@@ -25,7 +25,7 @@ Success criteria:
 | Sample real content | Gabe's Production Notes posts live in the bucket fixture |
 | Surfaces | CLI with inspectable stages, MCP server, minimal web UI |
 | LLM | Cerebras Inference API (verified working, key in `.env`, gitignored) |
-| Embeddings | Local via fastembed-js, bge-small-en-v1.5, 384 dimensions, no key needed |
+| Embeddings | Local via @huggingface/transformers (transformers.js), Xenova/bge-small-en-v1.5, 384 dimensions, no key needed |
 | Stack | TypeScript monorepo, pnpm workspaces |
 | Database | Postgres + pgvector via Podman (`compose.yaml`) |
 | Repo name | `anatomy-of-a-knowledge-base` (changeable before publish) |
