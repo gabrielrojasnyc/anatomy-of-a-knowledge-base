@@ -55,8 +55,17 @@ program
       fixturesDir: FIXTURES,
       sources: opts.source,
       distillModel: cfg.models.distill,
+      // Free tier rate limits are real; pace requests and retry patiently.
       llm: useLlm
-        ? (o) => chat({ model: o.model, system: o.system, user: o.user })
+        ? async (o) => {
+            await new Promise((r) => setTimeout(r, 400));
+            return chat({
+              model: o.model,
+              system: o.system,
+              user: o.user,
+              attempts: 5,
+            });
+          }
         : undefined,
       log: (m) => console.log(pc.dim(`  ${m}`)),
     });

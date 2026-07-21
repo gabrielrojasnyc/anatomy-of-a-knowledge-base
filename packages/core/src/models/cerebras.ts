@@ -18,6 +18,7 @@ export interface ChatOpts {
   baseUrl?: string;
   maxTokens?: number;
   retryDelayMs?: number;
+  attempts?: number;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -28,10 +29,15 @@ export async function chat(opts: ChatOpts): Promise<string> {
   if (!apiKey) throw new CerebrasError("CEREBRAS_API_KEY is not set");
   const url = `${opts.baseUrl ?? cfg.cerebrasBaseUrl}/chat/completions`;
   const delay = opts.retryDelayMs ?? 1000;
+  const attempts = opts.attempts ?? 3;
 
   let lastErr: CerebrasError | undefined;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await sleep(delay * 2 ** (attempt - 1));
+  let retryAfterMs: number | undefined;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (attempt > 0) {
+      await sleep(retryAfterMs ?? delay * 2 ** (attempt - 1));
+      retryAfterMs = undefined;
+    }
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -49,6 +55,11 @@ export async function chat(opts: ChatOpts): Promise<string> {
         }),
       });
       if (!res.ok) {
+        const retryAfter = res.headers?.get?.("retry-after");
+        const retryAfterSec = retryAfter ? Number(retryAfter) : NaN;
+        if (Number.isFinite(retryAfterSec) && retryAfterSec > 0) {
+          retryAfterMs = retryAfterSec * 1000;
+        }
         lastErr = new CerebrasError(`Cerebras HTTP ${res.status}`, res.status);
         continue;
       }

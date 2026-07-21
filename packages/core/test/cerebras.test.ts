@@ -6,10 +6,11 @@ const ok = (content: string) => ({
   status: 200,
   json: async () => ({ choices: [{ message: { content } }] }),
 });
-const fail = (status: number) => ({
+const fail = (status: number, retryAfter: string | null = null) => ({
   ok: false,
   status,
   text: async () => "err",
+  headers: { get: (_name: string) => retryAfter },
 });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -38,6 +39,26 @@ describe("cerebras client", () => {
       }),
     ).toBe("hi");
     expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it("respects attempts override and retry-after", async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValueOnce(fail(429, "0"))
+      .mockResolvedValueOnce(fail(429, "0"))
+      .mockResolvedValue(ok("hi"));
+    vi.stubGlobal("fetch", f);
+    expect(
+      await chat({
+        model: "m",
+        system: "s",
+        user: "u",
+        apiKey: "k",
+        attempts: 5,
+        retryDelayMs: 1,
+      }),
+    ).toBe("hi");
+    expect(f).toHaveBeenCalledTimes(3);
   });
 
   it("throws CerebrasError after 3 failures", async () => {
