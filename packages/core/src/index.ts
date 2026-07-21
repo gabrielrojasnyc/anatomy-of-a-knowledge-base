@@ -28,3 +28,5 @@ export { rerank } from "./retrieval/rerank.js";
 export { expandDoc } from "./retrieval/expand.js";
 export { search } from "./retrieval/search.js";
 export type { SearchResult, SearchTrace } from "./retrieval/search.js";
+export { buildTools } from "./answer/tools.js";
+export type { Tool } from "./answer/tools.js";
