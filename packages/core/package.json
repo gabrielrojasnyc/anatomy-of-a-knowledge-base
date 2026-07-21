@@ -1,0 +1,15 @@
+{
+  "name": "@kb/core",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0"
+  }
+}
