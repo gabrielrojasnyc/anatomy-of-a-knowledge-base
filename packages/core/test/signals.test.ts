@@ -33,7 +33,7 @@ describe("rareTokenRetriever", () => {
 
   it("ignores tokens whose idf sits below the default threshold", async () => {
     const { rows } = await pool.query(
-      `SELECT token FROM token_idf WHERE idf BETWEEN 2.3 AND 2.9 ORDER BY idf DESC LIMIT 1`,
+      `SELECT token FROM token_idf WHERE idf BETWEEN 2.0 AND 2.45 ORDER BY idf DESC LIMIT 1`,
     );
     expect(rows.length).toBe(1);
     const list = await rareTokenRetriever(pool, rows[0].token);

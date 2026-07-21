@@ -15,8 +15,8 @@ export async function rareTokenRetriever(
   query: string,
   opts: { sources?: string[]; limit?: number; minIdf?: number } = {},
 ): Promise<RankedList> {
-  // 3.0 keeps precise technical tokens (the prefetch flag sits near 3.4) while filtering the casual-word band near 2.0 to 2.8. IDF alone cannot fully separate rare-technical from rare-casual; RRF fusion absorbs the residue.
-  const minIdf = opts.minIdf ?? 3.0;
+  // 2.5 only skips ubiquitous terms whose candidate sets would span half the corpus. In a technical corpus casual words score HIGH idf (thanks 3.5, sounds 5.5 here), so no threshold can filter chatter; that job belongs to RRF fusion and the reranker.
+  const minIdf = opts.minIdf ?? 2.5;
   const tokens = [...new Set(tokenize(query))];
   const { rows: idfRows } = await pool.query(
     `SELECT token, idf FROM token_idf WHERE token = ANY($1) AND idf >= $2
