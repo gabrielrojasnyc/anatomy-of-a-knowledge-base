@@ -5,7 +5,18 @@ import { runIngest } from "../src/ingest/run.js";
 
 const ROOT = join(import.meta.dirname, "../../..");
 
+export function assertTestDatabase(): string {
+  const url = process.env.DATABASE_URL ?? "";
+  if (!/_test$/.test(url.split("?")[0]))
+    throw new Error(
+      `Refusing to run destructive tests against "${url || "(default live database)"}". ` +
+        `Tests must run through the root vitest config, which targets kb_test.`,
+    );
+  return url;
+}
+
 export async function ensureCorpus(pool: pg.Pool): Promise<void> {
+  assertTestDatabase();
   await migrate(pool);
   const { rows } = await pool.query(
     `SELECT (SELECT count(*)::int FROM embeddings) AS n,

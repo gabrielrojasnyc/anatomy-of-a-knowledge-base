@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { getPool } from "../src/schema/db.js";
 import { migrate } from "../src/schema/migrate.js";
 import { runIngest } from "../src/ingest/run.js";
+import { assertTestDatabase } from "./helpers.js";
 
 const ROOT = join(import.meta.dirname, "../../..");
 const pool = getPool();
@@ -20,6 +21,7 @@ const mockLlm = async ({ system }: { system: string }) =>
     : JSON.stringify({ summary: "distilled summary", key_facts: ["fact"] });
 
 beforeAll(async () => {
+  assertTestDatabase();
   await migrate(pool);
   await pool.query(
     `TRUNCATE embeddings, token_idf, project_sources, projects, sources`,

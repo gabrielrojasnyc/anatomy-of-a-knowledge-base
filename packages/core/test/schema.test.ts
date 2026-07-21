@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getPool } from "../src/schema/db.js";
 import { migrate } from "../src/schema/migrate.js";
+import { assertTestDatabase } from "./helpers.js";
 
 const pool = getPool();
 
 describe("schema", () => {
   beforeAll(async () => {
+    assertTestDatabase();
     await migrate(pool);
   });
   afterAll(async () => {
