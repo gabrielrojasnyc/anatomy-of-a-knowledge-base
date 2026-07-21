@@ -11,3 +11,4 @@ export { confluenceConnector } from "./ingest/connectors/confluence.js";
 export { githubConnector } from "./ingest/connectors/github.js";
 export { jiraConnector } from "./ingest/connectors/jira.js";
 export { groupBursts, scoreBurst } from "./ingest/burst.js";
+export { runIngest, defaultConnectors } from "./ingest/run.js";
