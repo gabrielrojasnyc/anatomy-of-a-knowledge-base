@@ -18,3 +18,8 @@ export {
   vectorRetriever,
   projectSources,
 } from "./retrieval/retrievers.js";
+export {
+  rareTokenRetriever,
+  recencyRetriever,
+  HALF_LIFE_DAYS,
+} from "./retrieval/signals.js";

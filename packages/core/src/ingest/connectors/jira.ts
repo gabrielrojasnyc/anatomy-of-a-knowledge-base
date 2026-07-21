@@ -134,6 +134,7 @@ export function jiraConnector(
         }
         docs.push({
           ...base,
+          authoredAt: new Date(b.at),
           sourceId: `${issue.key}#b${i}`,
           kind: "comment_burst",
           title: `${issue.key} comment by ${b.author}`,
