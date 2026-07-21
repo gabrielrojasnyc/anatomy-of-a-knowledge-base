@@ -24,3 +24,5 @@ export {
   HALF_LIFE_DAYS,
 } from "./retrieval/signals.js";
 export { fuse, parentKey } from "./retrieval/rrf.js";
+export { rerank } from "./retrieval/rerank.js";
+export { expandDoc } from "./retrieval/expand.js";
