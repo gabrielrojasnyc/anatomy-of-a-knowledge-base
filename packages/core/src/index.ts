@@ -5,3 +5,4 @@ export { migrate } from "./schema/migrate.js";
 export { chat, chatJSON } from "./models/cerebras.js";
 export { embedDocs, embedQuery } from "./models/embeddings.js";
 export { tokenize, computeIdf, rebuildTokenIdf, maxIdf } from "./ingest/idf.js";
+export { splitMarkdownSections, chunkTypeScript } from "./ingest/chunk.js";
