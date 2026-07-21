@@ -30,3 +30,6 @@ export { search } from "./retrieval/search.js";
 export type { SearchResult, SearchTrace } from "./retrieval/search.js";
 export { buildTools } from "./answer/tools.js";
 export type { Tool } from "./answer/tools.js";
+export { plan } from "./answer/planner.js";
+export { ask } from "./answer/ask.js";
+export type { AskResult } from "./answer/ask.js";
