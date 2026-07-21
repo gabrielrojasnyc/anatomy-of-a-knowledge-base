@@ -60,7 +60,11 @@ export async function chat(opts: ChatOpts): Promise<string> {
         if (Number.isFinite(retryAfterSec) && retryAfterSec > 0) {
           retryAfterMs = retryAfterSec * 1000;
         }
-        lastErr = new CerebrasError(`Cerebras HTTP ${res.status}`, res.status);
+        const detail = await res.text().catch(() => "");
+        lastErr = new CerebrasError(
+          `Cerebras HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`,
+          res.status,
+        );
         continue;
       }
       const body = (await res.json()) as {

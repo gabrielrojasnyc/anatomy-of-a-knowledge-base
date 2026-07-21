@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { getPool } from "../src/schema/db.js";
 import { migrate } from "../src/schema/migrate.js";
 import { runIngest } from "../src/ingest/run.js";
@@ -61,6 +63,54 @@ describe("runIngest", () => {
     for (const src of Object.keys(s.perSource)) {
       expect(s.perSource[src].ingested, src).toBe(0);
       expect(s.perSource[src].skipped, src).toBeGreaterThan(0);
+    }
+  });
+
+  it("isolates a connector whose discover() throws mid-run", async () => {
+    const scratch = mkdtempSync(join(tmpdir(), "kb-ingest-fault-"));
+    try {
+      for (const dir of ["confluence", "jira", "bucket", "github/helios"]) {
+        mkdirSync(join(scratch, dir), { recursive: true });
+      }
+      // Corrupt fixture: discover() must throw parsing this mid-iteration.
+      writeFileSync(join(scratch, "confluence/BAD.json"), "{not json");
+      // One valid bucket doc: front matter title plus one heading section.
+      writeFileSync(
+        join(scratch, "bucket/ok.md"),
+        [
+          "---",
+          "title: Scratch OK Doc",
+          "---",
+          "",
+          "# Scratch Heading",
+          "",
+          "Some scratch body text for testing fault isolation.",
+          "",
+        ].join("\n"),
+      );
+      writeFileSync(
+        join(scratch, "projects.json"),
+        JSON.stringify({
+          projects: [
+            {
+              name: "scratch-project",
+              description: "scratch",
+              sources: ["bucket"],
+            },
+          ],
+        }),
+      );
+
+      const s = await runIngest(pool, {
+        fixturesDir: scratch,
+        distillModel: "test",
+        log: () => {},
+      });
+
+      expect(s.perSource.confluence.failed).toBeGreaterThanOrEqual(1);
+      expect(s.perSource.bucket.ingested).toBeGreaterThanOrEqual(1);
+    } finally {
+      rmSync(scratch, { recursive: true, force: true });
     }
   });
 });

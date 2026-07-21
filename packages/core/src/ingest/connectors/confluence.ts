@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Connector, DistilledDoc, RawItem } from "../../schema/types.js";
 import { splitMarkdownSections } from "../chunk.js";
-import { distillSection } from "./bucket.js";
+import { distillSection } from "../distill.js";
 
 interface Page {
   id: string;

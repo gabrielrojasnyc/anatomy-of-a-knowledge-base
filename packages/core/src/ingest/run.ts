@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type pg from "pg";
 import type { Connector, DistillCtx } from "../schema/types.js";
@@ -25,6 +25,7 @@ export function vectorLiteral(v: number[]): string {
 function bootstrapJiraIdf(fixturesDir: string): Map<string, number> {
   const dir = join(fixturesDir, "jira");
   const docs: string[][] = [];
+  if (!existsSync(dir)) return new Map();
   for (const f of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
     const issue = JSON.parse(readFileSync(join(dir, f), "utf8")) as {
       description: string;
@@ -85,26 +86,31 @@ export async function runIngest(
       hash: string;
     }[] = [];
 
-    for await (const item of connector.discover()) {
-      try {
-        for (const doc of await connector.distill(item, ctx)) {
-          const hash = createHash("sha256").update(doc.content).digest("hex");
-          if (known.get(doc.sourceId) === hash) {
-            stat.skipped++;
-            continue;
+    try {
+      for await (const item of connector.discover()) {
+        try {
+          for (const doc of await connector.distill(item, ctx)) {
+            const hash = createHash("sha256").update(doc.content).digest("hex");
+            if (known.get(doc.sourceId) === hash) {
+              stat.skipped++;
+              continue;
+            }
+            if (
+              doc.metadata.distilled === false &&
+              doc.kind !== "comment_burst" &&
+              doc.kind !== "code_chunk"
+            )
+              stat.degraded++;
+            pending.push({ doc, hash });
           }
-          if (
-            doc.metadata.distilled === false &&
-            doc.kind !== "comment_burst" &&
-            doc.kind !== "code_chunk"
-          )
-            stat.degraded++;
-          pending.push({ doc, hash });
+        } catch (e) {
+          stat.failed++;
+          opts.log(`item ${item.sourceId} failed: ${e}`);
         }
-      } catch (e) {
-        stat.failed++;
-        opts.log(`item ${item.sourceId} failed: ${e}`);
       }
+    } catch (e) {
+      stat.failed++;
+      opts.log(`${connector.source}: discover failed: ${e}`);
     }
 
     try {
