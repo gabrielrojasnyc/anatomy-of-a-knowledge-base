@@ -15,7 +15,7 @@ export interface DistillCtx {
   log: (msg: string) => void;
 }
 
-export interface DistilledDoc {
+export interface EmbeddingInsert {
   source: string;
   sourceId: string;
   kind:
@@ -29,7 +29,11 @@ export interface DistilledDoc {
   raw: unknown;
   metadata: Record<string, unknown>;
   authoredAt: Date | null;
+  contentHash: string;
+  embedding: number[];
 }
+
+export type DistilledDoc = Omit<EmbeddingInsert, "embedding" | "contentHash">;
 
 export interface Connector {
   source: string;

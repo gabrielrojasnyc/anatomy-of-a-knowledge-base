@@ -26,7 +26,11 @@ export async function migrate(pool: pg.Pool): Promise<void> {
       ]);
       await client.query("COMMIT");
     } catch (e) {
-      await client.query("ROLLBACK");
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // ignore rollback errors
+      }
       throw e;
     } finally {
       client.release();
