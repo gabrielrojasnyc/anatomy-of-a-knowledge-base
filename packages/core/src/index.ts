@@ -12,3 +12,9 @@ export { githubConnector } from "./ingest/connectors/github.js";
 export { jiraConnector } from "./ingest/connectors/jira.js";
 export { groupBursts, scoreBurst } from "./ingest/burst.js";
 export { runIngest, defaultConnectors } from "./ingest/run.js";
+export * from "./retrieval/types.js";
+export {
+  ftsRetriever,
+  vectorRetriever,
+  projectSources,
+} from "./retrieval/retrievers.js";
