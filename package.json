@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "kb": "tsx packages/cli/src/index.ts",
+    "kb-mcp": "tsx packages/mcp/src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc -b packages/cli",
     "eval": "tsx eval/run.ts"
