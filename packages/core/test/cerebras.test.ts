@@ -5,12 +5,15 @@ const ok = (content: string) => ({
   ok: true,
   status: 200,
   json: async () => ({ choices: [{ message: { content } }] }),
+  headers: { get: (name: string) => (name === "retry-after" ? null : null) },
 });
 const fail = (status: number, retryAfter: string | null = null) => ({
   ok: false,
   status,
   text: async () => "err",
-  headers: { get: (_name: string) => retryAfter },
+  headers: {
+    get: (name: string) => (name === "retry-after" ? retryAfter : null),
+  },
 });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -41,24 +44,27 @@ describe("cerebras client", () => {
     expect(f).toHaveBeenCalledTimes(2);
   });
 
-  it("respects attempts override and retry-after", async () => {
+  it("attempts override goes past 3 and retry-after overrides exponential backoff", async () => {
     const f = vi
       .fn()
-      .mockResolvedValueOnce(fail(429, "0"))
-      .mockResolvedValueOnce(fail(429, "0"))
-      .mockResolvedValue(ok("hi"));
+      .mockResolvedValueOnce(fail(429, "1"))
+      .mockResolvedValueOnce(fail(429, "1"))
+      .mockResolvedValueOnce(fail(429, "1"))
+      .mockResolvedValueOnce(fail(429, "1"))
+      .mockResolvedValue(ok("late win"));
     vi.stubGlobal("fetch", f);
-    expect(
-      await chat({
-        model: "m",
-        system: "s",
-        user: "u",
-        apiKey: "k",
-        attempts: 5,
-        retryDelayMs: 1,
-      }),
-    ).toBe("hi");
-    expect(f).toHaveBeenCalledTimes(3);
+    const started = Date.now();
+    const out = await chat({
+      model: "m",
+      system: "s",
+      user: "u",
+      apiKey: "k",
+      attempts: 5,
+      retryDelayMs: 5000,
+    });
+    expect(out).toBe("late win");
+    expect(f).toHaveBeenCalledTimes(5);
+    expect(Date.now() - started).toBeLessThan(10_000);
   });
 
   it("throws CerebrasError after 3 failures", async () => {
