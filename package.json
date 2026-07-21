@@ -5,8 +5,9 @@
   "scripts": {
     "kb": "tsx packages/cli/src/index.ts",
     "kb-mcp": "tsx packages/mcp/src/index.ts",
+    "web": "tsx packages/web/src/api.ts",
     "test": "vitest run",
-    "typecheck": "tsc -b packages/cli",
+    "typecheck": "tsc -b packages/cli packages/mcp packages/web",
     "eval": "tsx eval/run.ts"
   },
   "dependencies": {

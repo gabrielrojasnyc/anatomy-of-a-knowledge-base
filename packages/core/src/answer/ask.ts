@@ -26,7 +26,12 @@ export interface AskResult {
   };
 }
 
-export async function ask(
+export type AskStage =
+  | { stage: "plan"; plan: AskResult["plan"] }
+  | { stage: "evidence"; tool: string; rows: EvidenceRow[] }
+  | { stage: "answer"; text: string };
+
+export async function askStream(
   pool: pg.Pool,
   question: string,
   opts: {
@@ -34,6 +39,7 @@ export async function ask(
     fixturesDir: string;
     llm: Llm;
   },
+  emit: (e: AskStage) => void,
 ): Promise<AskResult> {
   const cfg = loadConfig();
   const tools = buildTools(pool, {
@@ -51,15 +57,21 @@ export async function ask(
     llm: opts.llm,
     model: cfg.models.planner,
   });
+  emit({ stage: "plan", plan: p });
 
   const byName = new Map(tools.map((t) => [t.name, t]));
   const settled = await Promise.all(
     p.tools.map((t) => {
       const tool = byName.get(t.name);
-      if (!tool) return Promise.resolve([] as EvidenceRow[]);
-      return tool
-        .run({ query: t.query, project: opts.project })
-        .catch(() => [] as EvidenceRow[]);
+      const run = tool
+        ? tool
+            .run({ query: t.query, project: opts.project })
+            .catch(() => [] as EvidenceRow[])
+        : Promise.resolve([] as EvidenceRow[]);
+      return run.then((toolRows) => {
+        emit({ stage: "evidence", tool: t.name, rows: toolRows });
+        return toolRows;
+      });
     }),
   );
   const seen = new Set<string>();
@@ -89,6 +101,19 @@ export async function ask(
           system: SYNTHESIS_SYSTEM,
           user: `<question>${question}</question>\n${numbered}`,
         });
+  emit({ stage: "answer", text: answer });
 
   return { answer, evidence, plan: p };
+}
+
+export async function ask(
+  pool: pg.Pool,
+  question: string,
+  opts: {
+    project?: string;
+    fixturesDir: string;
+    llm: Llm;
+  },
+): Promise<AskResult> {
+  return askStream(pool, question, opts, () => {});
 }

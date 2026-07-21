@@ -99,4 +99,28 @@ describe("ask", () => {
     const keys = result.evidence.map((e) => `${e.source}:${e.sourceId}`);
     expect(new Set(keys).size).toBe(keys.length);
   });
+
+  it("askStream emits plan, per-tool evidence, then answer", async () => {
+    const llm = async ({ system }: { system: string }) => {
+      if (system.includes("select the best tools"))
+        return JSON.stringify({
+          tools: [{ name: "search_jira", query: "manifest timeout" }],
+          reasoning: "jira only",
+        });
+      return "streamed answer [1]";
+    };
+    const stages: string[] = [];
+    const { askStream } = await import("../src/answer/ask.js");
+    const result = await askStream(
+      pool,
+      "what is ERR_MANIFEST_TIMEOUT?",
+      {
+        fixturesDir: join(ROOT, "fixtures"),
+        llm,
+      },
+      (e) => stages.push(e.stage),
+    );
+    expect(stages).toEqual(["plan", "evidence", "answer"]);
+    expect(result.answer).toContain("streamed answer");
+  });
 });
