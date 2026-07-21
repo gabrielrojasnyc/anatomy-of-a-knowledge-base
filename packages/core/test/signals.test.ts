@@ -30,6 +30,15 @@ describe("rareTokenRetriever", () => {
     const list = await rareTokenRetriever(pool, "helios checkpoint restore");
     expect(list.docs).toEqual([]);
   });
+
+  it("ignores tokens whose idf sits below the default threshold", async () => {
+    const { rows } = await pool.query(
+      `SELECT token FROM token_idf WHERE idf BETWEEN 2.6 AND 3.4 ORDER BY idf DESC LIMIT 1`,
+    );
+    expect(rows.length).toBe(1);
+    const list = await rareTokenRetriever(pool, rows[0].token);
+    expect(list.docs).toEqual([]);
+  });
 });
 
 describe("recencyRetriever", () => {

@@ -15,8 +15,8 @@ export async function rareTokenRetriever(
   query: string,
   opts: { sources?: string[]; limit?: number; minIdf?: number } = {},
 ): Promise<RankedList> {
-  // 2.5 calibrates rarity to corpus size: admits tokens in ~1/12th of docs or fewer, filtering casual words.
-  const minIdf = opts.minIdf ?? 2.5;
+  // 3.5 admits tokens in roughly 1/33rd of docs or fewer; casual words clear 2.0 in a small corpus.
+  const minIdf = opts.minIdf ?? 3.5;
   const tokens = [...new Set(tokenize(query))];
   const { rows: idfRows } = await pool.query(
     `SELECT token, idf FROM token_idf WHERE token = ANY($1) AND idf >= $2
