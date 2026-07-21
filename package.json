@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "kb": "tsx packages/cli/src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc -b packages/core"
   },
