@@ -1,0 +1,17 @@
+{
+  "key": "HEL-455",
+  "summary": "Decision: adopt canary as the default serving rollout strategy",
+  "type": "Decision",
+  "status": "Accepted",
+  "components": ["serving", "process"],
+  "createdAt": "2026-05-04T10:00:00Z",
+  "resolvedAt": "2026-05-06T15:00:00Z",
+  "reporter": "Maya Okafor",
+  "description": "Proposal to make canary rollouts, as designed with the ramp scheduler shipped in HEL-345, the default deploy path for serving, replacing blue-green. Blue-green gave a clean cutover but no gradual exposure, and HEL-112 is one of several incidents where that cost us.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2026-05-04T10:30:00Z", "body": "In favor. The ramp scheduler and automatic regression abort from HEL-345 make canary safe to default to now, that gap is what made blue-green the safer default before." },
+    { "author": "Elena Petrova", "at": "2026-05-05T09:00:00Z", "body": "Also in favor from the SRE side, canary rollback is just setting weight to zero, simpler than the blue-green flip procedure operationally." },
+    { "author": "Sam Whitfield", "at": "2026-05-05T09:05:00Z", "body": "ack, sounds good" },
+    { "author": "Maya Okafor", "at": "2026-05-06T15:00:00Z", "body": "Decision accepted: canary is now the default rollout strategy. Owen is documenting the new process, blue-green tooling stays available but deprecated. Resolving." }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "key": "HEL-330",
+  "summary": "Add shard cache warm-on-start option for known-hot checkpoints",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["checkpoint", "storage"],
+  "createdAt": "2025-09-25T09:00:00Z",
+  "resolvedAt": "2025-10-02T15:00:00Z",
+  "reporter": "Maya Okafor",
+  "description": "For checkpoints we know will be restored repeatedly in a short window, such as during active debugging of an incident, it would help to warm the shard cache proactively rather than waiting for the first restore to trigger it.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2025-09-25T09:30:00Z", "body": "Reasonable. I'll add a warmNow method on ShardCache in src/checkpoint/shardCache.ts that takes a manifest and pins every shard without going through a full restore." },
+    { "author": "Owen Reyes", "at": "2025-09-26T10:00:00Z", "body": "would be nice to expose this through the CLI too, not just as a library method" },
+    { "author": "Priya Natarajan", "at": "2025-10-02T14:50:00Z", "body": "Added warmNow to ShardCache and a warm command to the CLI dispatch in src/cli/main.ts. Tested against a known checkpoint, subsequent restore skipped the fetch entirely for already-warmed shards. Resolving." },
+    { "author": "Maya Okafor", "at": "2025-10-02T15:00:00Z", "body": "This will help a lot during incident debugging, thanks." }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "HEL-008",
+  "title": "Runbook: NFS Mount Troubleshooting",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2025-08-06T08:40:00Z",
+  "labels": ["runbook", "storage", "nfs"],
+  "bodyMarkdown": "Checkpoint restore depends on NFS mounts in most of our clusters. This runbook covers the failure modes we see most.\n\n## Symptoms of a bad mount\nRestore stalls with no error, matching the pattern in the checkpoint restore runbook. Alternatively, the loader logs repeated timeouts reading individual shard files, without any single shard consistently failing.\n\n## Checking mount health\nFrom any host in the cluster, confirm the mount is present and not stale. A stale mount often looks fine to a directory listing but hangs on any file read. Restarting the automounter clears most stale mount cases without a full host reboot.\n\n## Prefetch depth interaction\nRemember that HELIOS_PREFETCH_DEPTH defaults to 16, tuned for local SSD. On NFS this alone can produce the exact stall symptom above even when the mount itself is healthy. Rule out prefetch depth before assuming the mount is broken; see src/config/env.ts for where the default lives.\n\n## Escalation\nIf the mount is confirmed stale and restarting the automounter does not clear it, page the storage on-call. Priya Natarajan owns this runbook and NFS-related incidents generally."
+}

@@ -1,0 +1,9 @@
+{
+  "id": "HEL-006",
+  "title": "RFC: Auto-Detect Prefetch Depth by Mount Type",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2025-06-09T11:00:00Z",
+  "labels": ["rfc", "storage", "checkpoint"],
+  "bodyMarkdown": "Follow-up from HEL-482, the incident where a 128-shard restore stalled after manifest load because the loader's default prefetch depth of 16 saturated an NFS mount.\n\n## Background\nsrc/checkpoint/loader.ts warms the shard cache by reading HELIOS_PREFETCH_DEPTH from config, defaulting to 16. That default is correct for local SSD and wrong for network storage, and nothing today tells an operator which regime they are in until a restore stalls.\n\n## Proposal\nDetect the mount type of the checkpoint directory at startup, by checking the filesystem type reported by the OS, and pick a sane default automatically: 16 for local disk, 4 for anything that looks like NFS or another network filesystem. HELIOS_PREFETCH_DEPTH would still override the detected value for operators who know better.\n\n## Open questions\nContainer environments sometimes report the host filesystem type incorrectly, we need a fallback that errs conservative rather than defaulting back to 16 on ambiguous input. Also unresolved: whether this belongs in src/config/env.ts or as a new module in src/fs.\n\n## Status\nNot yet implemented. Filed as a follow-up from the incident, no committed timeline. Priya Natarajan is driving."
+}

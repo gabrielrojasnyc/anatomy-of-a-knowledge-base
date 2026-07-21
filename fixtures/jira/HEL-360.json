@@ -1,0 +1,17 @@
+{
+  "key": "HEL-360",
+  "summary": "Add structured request-id logging across serving and restore",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["metrics", "sre"],
+  "createdAt": "2025-11-19T10:00:00Z",
+  "resolvedAt": "2025-11-25T14:00:00Z",
+  "reporter": "Elena Petrova",
+  "description": "Tracing a single request or restore job across logs today means grepping for timestamps and hoping nothing else logged in the same window. We want every log line touched by a request to carry its request id or job id.",
+  "comments": [
+    { "author": "Elena Petrova", "at": "2025-11-19T10:20:00Z", "body": "log in src/util/log.ts already accepts a fields object, so this is mostly a discipline problem: every call site along the request and restore paths needs to pass requestId or jobId through." },
+    { "author": "Owen Reyes", "at": "2025-11-20T09:00:00Z", "body": "the http and router modules are the easy ones, will thread requestId through those" },
+    { "author": "Priya Natarajan", "at": "2025-11-21T10:00:00Z", "body": "threaded jobId through the restore coordinator, fetcher, and loader call sites" },
+    { "author": "Elena Petrova", "at": "2025-11-25T13:50:00Z", "body": "Confirmed every log line on both paths now carries an id. This was a decision to standardize on structured JSON logs generally, see HEL-470 for that. Resolving." }
+  ]
+}

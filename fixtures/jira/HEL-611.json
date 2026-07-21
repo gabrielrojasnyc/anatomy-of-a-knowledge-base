@@ -1,0 +1,18 @@
+{
+  "key": "HEL-611",
+  "summary": "Decision: cut checkpoint retention from 30 to 14 days for storage cost",
+  "type": "Decision",
+  "status": "Accepted",
+  "components": ["storage", "checkpoint"],
+  "createdAt": "2026-05-15T10:00:00Z",
+  "resolvedAt": "2026-05-19T15:00:00Z",
+  "reporter": "Maya Okafor",
+  "description": "Object storage spend for training checkpoints has grown faster than headcount justifies. Proposal to cut the retention window defined in the checkpoint retention policy wiki page from 30 days to 14 days, based on an audit showing almost no restores reference a checkpoint older than two weeks.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-05-15T10:30:00Z", "body": "I own the retention sweep job, checked the audit numbers myself. Restores older than 14 days are rare enough that this is a reasonable cost tradeoff. Will update the sweep job's cutoff once this is accepted." },
+    { "author": "Owen Reyes", "at": "2026-05-16T09:00:00Z", "body": "no objection from serving, we don't hold checkpoint references past a few days anyway" },
+    { "author": "Sam Whitfield", "at": "2026-05-16T09:05:00Z", "body": "ack" },
+    { "author": "Maya Okafor", "at": "2026-05-19T15:00:00Z", "body": "Decision accepted: retention cuts to 14 days effective immediately. This supersedes the 30-day figure on the checkpoint retention policy wiki page, that page should be treated as stale until Priya updates it. Resolving." },
+    { "author": "Priya Natarajan", "at": "2026-05-19T15:10:00Z", "body": "Sweep job cutoff updated to 14 days and deployed. Will update the wiki page this week to match." }
+  ]
+}

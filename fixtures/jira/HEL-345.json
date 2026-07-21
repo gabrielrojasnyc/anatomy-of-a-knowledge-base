@@ -1,0 +1,16 @@
+{
+  "key": "HEL-345",
+  "summary": "Support configurable canary weight ramp schedule in router",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["serving"],
+  "createdAt": "2025-10-30T11:00:00Z",
+  "resolvedAt": "2025-11-10T16:00:00Z",
+  "reporter": "Owen Reyes",
+  "description": "Ahead of moving the team to canary as the default rollout, we want the ramp stages (5, 25, 100 percent today) to be configurable per deploy rather than hardcoded in the runbook as a manual sequence of setCanary calls.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2025-10-30T11:30:00Z", "body": "setCanary in src/serving/router.ts already accepts an arbitrary weight, the gap is purely that nothing automates stepping through a schedule. Planning to add a small scheduler that calls setCanary on a timer with configurable stage weights and dwell times." },
+    { "author": "Elena Petrova", "at": "2025-10-31T09:00:00Z", "body": "make sure it can be aborted mid-ramp if metrics regress, that's the main risk with automating this" },
+    { "author": "Owen Reyes", "at": "2025-11-10T15:40:00Z", "body": "Shipped a ramp scheduler that steps through configured stages and checks error rate before each advance, aborting back to zero weight on regression. This is what closes the manual-step gap flagged in HEL-177. Resolving." }
+  ]
+}

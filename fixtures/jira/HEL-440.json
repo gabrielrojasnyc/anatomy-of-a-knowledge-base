@@ -1,0 +1,16 @@
+{
+  "key": "HEL-440",
+  "summary": "Add backoff ceiling config for restore coordinator retries",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["storage", "restore"],
+  "createdAt": "2026-04-09T10:00:00Z",
+  "resolvedAt": "2026-04-16T14:00:00Z",
+  "reporter": "Priya Natarajan",
+  "description": "withRetry in src/util/backoff.ts hardcodes maxMs at 10 seconds for every caller. During the eu-west slowdown covered in HEL-530, we wanted a higher ceiling for restore specifically without changing the default for every other caller of backoff.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-04-09T10:20:00Z", "body": "withRetry already accepts a partial options override per call, so the restore coordinator just needs to pass a higher maxMs explicitly instead of relying on the default. Making it configurable via env var too so on-call can bump it without a code change during an incident." },
+    { "author": "Owen Reyes", "at": "2026-04-16T13:50:00Z", "body": "confirmed this would have made the HEL-530 mitigation a config change instead of a code deploy, good improvement" },
+    { "author": "Priya Natarajan", "at": "2026-04-16T14:00:00Z", "body": "Shipped HELIOS_RESTORE_BACKOFF_CEILING_MS, defaults to the existing 10 second behavior, restore coordinator reads it and passes it through to withRetry. Resolving." }
+  ]
+}

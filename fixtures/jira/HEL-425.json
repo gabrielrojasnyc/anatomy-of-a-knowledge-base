@@ -1,0 +1,15 @@
+{
+  "key": "HEL-425",
+  "summary": "CLI flag to override prefetch depth per restore run",
+  "type": "Feature",
+  "status": "In Progress",
+  "components": ["cli", "storage"],
+  "createdAt": "2026-03-17T09:00:00Z",
+  "reporter": "Sam Whitfield",
+  "description": "Right now overriding HELIOS_PREFETCH_DEPTH means setting an environment variable before invoking the CLI, easy to forget to unset afterward. A --prefetch-depth flag scoped to a single invocation would be safer for one-off restores against NFS.",
+  "comments": [
+    { "author": "Jonah Kim", "at": "2026-03-17T09:30:00Z", "body": "parseFlags in src/cli/flags.ts already parses --prefetch-depth, main.ts just needs to set the env var from the parsed flag before reloadConfig runs, most of this is already wired." },
+    { "author": "Sam Whitfield", "at": "2026-03-18T10:00:00Z", "body": "oh nice, did not realize the flag parsing already existed" },
+    { "author": "Jonah Kim", "at": "2026-03-24T11:00:00Z", "body": "Wiring is in, still need to add a test covering the case where both the env var and the flag are set, flag should win. Not resolved yet." }
+  ]
+}

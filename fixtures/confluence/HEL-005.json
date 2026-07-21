@@ -1,0 +1,9 @@
+{
+  "id": "HEL-005",
+  "title": "RFC: Shard Cache Design",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2025-05-14T13:20:00Z",
+  "labels": ["rfc", "storage", "checkpoint"],
+  "bodyMarkdown": "This RFC proposes the design behind src/checkpoint/shardCache.ts, which the loader uses to warm shard bytes ahead of restore.\n\n## Problem\nBefore this design, the loader read every shard from disk on every warm call, even shards it had already fetched moments earlier during a retry. That wasted IO and slowed restore under any kind of transient failure.\n\n## Design\nA pinned in-memory cache keyed by shard key. Pinning keeps a shard resident until the loader explicitly releases it, so a shard mid-restore never gets evicted out from under an in-flight read. Unpinned entries fall back to least-recently-used eviction once the cache exceeds its byte budget, currently 8 GiB by default.\n\n## Alternatives considered\nA disk-backed cache was considered and rejected: it would have added another IO layer on the exact path we are trying to make faster. An unbounded in-memory cache was also rejected, it risks OOM-killing the loader process on large clusters.\n\n## Status\nShipped. The eviction logic lives entirely in ShardCache, no other module reaches into its internals. Questions go to Priya Natarajan."
+}

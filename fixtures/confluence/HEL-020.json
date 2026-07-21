@@ -1,0 +1,9 @@
+{
+  "id": "HEL-020",
+  "title": "Deploy Process: Blue-Green Rollouts",
+  "space": "HELIOS",
+  "authors": ["Owen Reyes"],
+  "updatedAt": "2025-09-17T11:15:00Z",
+  "labels": ["deploy", "serving", "process"],
+  "bodyMarkdown": "How Helios ships a new serving version today, using a blue-green rollout.\n\n## Overview\nTwo full replica sets exist at all times, referred to as blue and green. One is live, taking all production traffic; the other is idle or running the newly built version. A deploy brings the idle set up to the new version, runs smoke tests against it directly, then flips the router in src/serving/router.ts to send all traffic to the newly promoted set.\n\n## Steps\nBuild and deploy the new version to the idle replica set. Run the smoke test suite against it in isolation, with no production traffic reaching it yet. Flip the router to the newly promoted set, all at once. Keep the old set running, undeployed, for a rollback window before tearing it down.\n\n## Rollback\nFlip the router back to the previous color. See the serving rollback runbook for the full procedure.\n\n## Tradeoffs\nBlue-green gives a clean all-or-nothing cutover with a fast rollback, but any bad deploy affects all traffic the moment the flip happens, there is no gradual exposure. Owen Reyes owns this process."
+}

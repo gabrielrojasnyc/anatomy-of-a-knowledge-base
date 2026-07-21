@@ -1,0 +1,9 @@
+{
+  "id": "HEL-007",
+  "title": "Serving: How Configuration Problems Are Handled at Startup",
+  "space": "HELIOS",
+  "authors": ["Owen Reyes"],
+  "updatedAt": "2025-07-21T15:45:00Z",
+  "labels": ["serving", "configuration"],
+  "bodyMarkdown": "This page explains what happens when the serving process is given a configuration it cannot run with.\n\n## Behavior\nBefore the server does anything else, src/serving/configValidate.ts checks every field it depends on: replica count, prefetch depth, the manifest fetch deadline, and the object store endpoint. If any field fails its check, the process aborts immediately with a descriptive error listing every offending field. The process never opens a port or accepts a connection in this state.\n\n## Why abort instead of degrade\nWe considered letting the server come up with defaults substituted for bad fields, and rejected it. A serving process that silently swaps in a default for a broken value can run for hours before anyone notices the substitution, usually as a confusing latency or capacity problem far downstream. An immediate, loud stop at process start is easier to diagnose and impossible to miss in a deploy pipeline.\n\n## What operators see\nEach invalid field is logged with the field name and the reason it failed, then the process exits nonzero. Deploy tooling treats this the same as any other crash: the rollout halts and the previous version keeps serving.\n\n## Related\nSee src/config/env.ts for where these values are read from environment variables. Owen Reyes owns this behavior."
+}

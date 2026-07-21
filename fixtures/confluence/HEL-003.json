@@ -1,0 +1,9 @@
+{
+  "id": "HEL-003",
+  "title": "Onboarding: Getting Access to the Staging Cluster",
+  "space": "HELIOS",
+  "authors": ["Sam Whitfield"],
+  "updatedAt": "2025-03-04T10:30:00Z",
+  "labels": ["onboarding", "staging", "access"],
+  "bodyMarkdown": "Everyone joining the Helios team needs staging access in their first week. This page walks through the request.\n\n## Request the grant\nFile an access request in the infra portal under Helios Staging Cluster, tag your manager as approver. Approval usually lands within a business day. Do not ask for prod access at this stage, staging is where you learn the system.\n\n## What staging gets you\nA scaled-down copy of the serving fleet, a checkpoint restore pipeline pointed at a small NFS-backed mount, and read access to the shared metrics dashboard. It is intentionally undersized so mistakes are cheap.\n\n## First things to try\nRun a restore against a small checkpoint to see the loader and shard cache in action, then hit the serving endpoint with a test request. If the restore stalls, check the checkpoint restore runbook before paging anyone.\n\n## Common blockers\nVPN must be connected before the portal will show the Helios grant option. If your request sits pending more than two days, ping Elena Petrova, she handles the SRE side of cluster access. Sam Whitfield maintains this page, flag anything stale."
+}

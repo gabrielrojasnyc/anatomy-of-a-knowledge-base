@@ -1,0 +1,9 @@
+{
+  "id": "HEL-017",
+  "title": "CLI Usage Guide",
+  "space": "HELIOS",
+  "authors": ["Jonah Kim"],
+  "updatedAt": "2026-02-10T15:00:00Z",
+  "labels": ["cli", "tooling"],
+  "bodyMarkdown": "Reference for the helios CLI, entry point at src/cli/main.ts.\n\n## Commands\nrestore takes a manifest path and kicks off a full restore through the coordinator, printing the job id it can be tracked by. serve starts a local serving process on port 8080, useful for smoke testing without a full deploy. verify prints the resolved configuration without touching a cluster, the fastest way to confirm an env override actually took effect.\n\n## Flags\n--config points at a config file path, --prefetch-depth overrides HELIOS_PREFETCH_DEPTH for the invocation, --manifest is required for restore, --verbose enables debug-level logging. Flag parsing lives in src/cli/flags.ts and rejects unrecognized flags outright rather than silently ignoring them.\n\n## Common mistakes\nForgetting --manifest on a restore call is the most common error, it fails fast with a clear message rather than doing nothing. Passing a non-integer to --prefetch-depth is rejected at parse time before any work starts.\n\n## Extending the CLI\nNew commands go in the switch statement in main.ts, keep flag parsing changes isolated to flags.ts. Jonah Kim maintains this tooling, loop him in on anything beyond a small addition."
+}

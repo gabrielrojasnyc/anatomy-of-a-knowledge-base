@@ -1,0 +1,16 @@
+{
+  "key": "HEL-158",
+  "summary": "NFS mount flapping causes intermittent restore failures",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["storage"],
+  "createdAt": "2025-07-22T07:45:00Z",
+  "resolvedAt": "2025-07-22T11:30:00Z",
+  "reporter": "Elena Petrova",
+  "description": "Restores on the eu-west cluster failed intermittently overnight, roughly one in five. No consistent shard or host implicated.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2025-07-22T08:30:00Z", "body": "The automounter on that cluster has been flapping since a network change last week, per the NFS troubleshooting runbook. Failures line up with the flap timestamps in the host logs." },
+    { "author": "Sam Whitfield", "at": "2025-07-22T08:35:00Z", "body": "ok will avoid kicking off big restores on eu-west until this clears" },
+    { "author": "Priya Natarajan", "at": "2025-07-22T11:25:00Z", "body": "Networking rolled back the change that caused the flap. Ran ten consecutive restores clean afterward. Resolving, will keep an eye on it through the week." }
+  ]
+}

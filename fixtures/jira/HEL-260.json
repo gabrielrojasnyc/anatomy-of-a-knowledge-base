@@ -1,0 +1,17 @@
+{
+  "key": "HEL-260",
+  "summary": "Compiler emits invalid op ordering for fused kernels",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["compiler"],
+  "createdAt": "2026-02-14T10:00:00Z",
+  "resolvedAt": "2026-02-17T16:30:00Z",
+  "reporter": "Jonah Kim",
+  "description": "A specific fusion pattern involving a reduce followed by a broadcast occasionally emits the broadcast before the reduce it depends on has completed, producing silently wrong output rather than a crash. Found via a numerical mismatch in an eval run, not a compiler error.",
+  "comments": [
+    { "author": "Jonah Kim", "at": "2026-02-14T10:30:00Z", "body": "This is the op ordering failure mode mentioned on the compiler overview page. The scheduler assumed reduce and broadcast in this fusion pattern were independent because they touch different tensor shapes, but they share a data dependency the shape check does not catch." },
+    { "author": "Sam Whitfield", "at": "2026-02-14T10:35:00Z", "body": "scary that this was silent, glad the eval caught it" },
+    { "author": "Jonah Kim", "at": "2026-02-17T16:20:00Z", "body": "Fixed by adding an explicit data dependency edge for this fusion pattern in the scheduler, not just a shape check. Re-ran the eval that originally caught the mismatch, numbers match now. This does not touch anything under src/serving, purely compiler-side. Resolving." },
+    { "author": "Maya Okafor", "at": "2026-02-17T16:30:00Z", "body": "Given this was silent, worth double checking other fusion patterns for the same class of gap when you have time." }
+  ]
+}

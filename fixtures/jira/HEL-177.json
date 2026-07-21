@@ -1,0 +1,15 @@
+{
+  "key": "HEL-177",
+  "summary": "Canary rollout stuck at 5 percent traffic, will not ramp",
+  "type": "Incident",
+  "status": "Open",
+  "components": ["serving"],
+  "createdAt": "2026-06-10T09:00:00Z",
+  "reporter": "Owen Reyes",
+  "description": "Following the new canary process from HEL-021, a rollout this morning sat at 5 percent canary weight for over an hour with no automatic progression and metrics that looked healthy the whole time.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2026-06-10T09:15:00Z", "body": "Ramp stages in the runbook are manual steps today, not automated. The engineer running the rollout stepped away after setting the initial weight and nothing advanced it. Not a bug in src/serving/router.ts, more a process gap." },
+    { "author": "Elena Petrova", "at": "2026-06-10T09:30:00Z", "body": "we should probably automate the stage advancement given how new this process is, easy to forget a manual step" },
+    { "author": "Sam Whitfield", "at": "2026-06-10T09:32:00Z", "body": "+1, happened to me on staging too last week" }
+  ]
+}

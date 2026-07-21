@@ -1,0 +1,16 @@
+{
+  "key": "HEL-410",
+  "summary": "Add read-only API scope for dashboard and debugging tools",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["api"],
+  "createdAt": "2026-02-20T09:00:00Z",
+  "resolvedAt": "2026-02-27T13:00:00Z",
+  "reporter": "Owen Reyes",
+  "description": "Today a caller either has serve:invoke or admin, nothing in between. Internal debugging tools that only need to read replica health and recent request stats are being handed admin tokens out of convenience, which is more access than they need.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2026-02-20T09:20:00Z", "body": "Adding a read:status scope, checked the same way as serve:invoke via requireScope in src/api/auth.ts, and gating the status endpoints behind it instead of admin." },
+    { "author": "Elena Petrova", "at": "2026-02-21T10:00:00Z", "body": "will switch the dashboard tooling over to the new scope once it ships" },
+    { "author": "Owen Reyes", "at": "2026-02-27T12:50:00Z", "body": "Shipped read:status, migrated the two internal tools we knew about off admin tokens. Resolving, flag if anything else still needs admin for read-only access." }
+  ]
+}

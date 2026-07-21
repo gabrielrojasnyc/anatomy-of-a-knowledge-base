@@ -1,0 +1,9 @@
+{
+  "id": "HEL-014",
+  "title": "Checkpoint Retention Policy",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2025-11-12T11:00:00Z",
+  "labels": ["policy", "storage", "checkpoint"],
+  "bodyMarkdown": "This page defines how long we keep checkpoints in object storage.\n\n## Policy\nCheckpoints are retained for 30 days from the time they are written. After 30 days, an automated sweep deletes the checkpoint directory and its manifest. This applies uniformly across training runs, there is no per-team exception process today.\n\n## Rationale\nThirty days covers the typical window a team needs to roll back a bad training run or re-run an evaluation against a specific checkpoint, without letting object storage grow unbounded. Most restores reference a checkpoint from the last few days; anything older is almost always superseded.\n\n## What is not covered\nThis policy governs training checkpoints only. Serving snapshots used for canary and blue-green rollouts follow a separate, shorter retention window documented in the deploy process pages.\n\n## Requesting an exception\nIf you need a checkpoint held past 30 days for an audit or a long-running comparison, copy it to a separate archival prefix before the sweep runs. There is no automatic extension.\n\n## Owner\nPriya Natarajan owns this policy and the sweep job that enforces it."
+}

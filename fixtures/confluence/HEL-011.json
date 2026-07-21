@@ -1,0 +1,9 @@
+{
+  "id": "HEL-011",
+  "title": "On-Call Guide",
+  "space": "HELIOS",
+  "authors": ["Elena Petrova"],
+  "updatedAt": "2025-09-02T09:00:00Z",
+  "labels": ["oncall", "sre", "runbook"],
+  "bodyMarkdown": "What to do when you are the Helios on-call.\n\n## Rotation\nWeekly rotation across the SRE-facing engineers. Handoff happens Monday morning with a short sync on anything still open from the prior week.\n\n## Primary responsibilities\nRespond to pages within fifteen minutes during business hours, thirty minutes off hours. Triage first: is this a known failure mode with a runbook, or something new. Most pages map to an existing runbook, check the checkpoint restore runbook and the NFS mount troubleshooting page first for anything storage-shaped, and the serving rollback runbook for anything deploy-shaped.\n\n## Escalation\nIf you cannot resolve within thirty minutes, pull in the relevant owner: Priya Natarajan for storage, Owen Reyes for serving, Jonah Kim for anything compiler-adjacent. Do not sit on a page alone past that window.\n\n## Incident hygiene\nOpen a JIRA incident for anything customer-facing, even if resolved quickly. Future on-calls rely on that history; several existing runbooks trace back to a single incident writeup.\n\n## After your week\nHand off any open threads explicitly, do not assume the next on-call will find them. Elena Petrova maintains this guide."
+}

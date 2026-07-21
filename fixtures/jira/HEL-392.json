@@ -1,0 +1,15 @@
+{
+  "key": "HEL-392",
+  "summary": "Expose restore progress via metrics exporter",
+  "type": "Feature",
+  "status": "Resolved",
+  "components": ["metrics", "restore"],
+  "createdAt": "2026-01-27T10:00:00Z",
+  "resolvedAt": "2026-02-05T15:30:00Z",
+  "reporter": "Elena Petrova",
+  "description": "Gap noted on the metrics and observability architecture page: restore only reports start and completion today, nothing incremental. On a large cluster restore that takes several minutes, on-call has no visibility into whether it is progressing or stuck.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-01-27T10:30:00Z", "body": "Can emit a sample from RestoreCoordinator each time a shard finishes warming, using record() in src/metrics/stats.ts, tagged with jobId and shard count so far." },
+    { "author": "Elena Petrova", "at": "2026-02-05T15:20:00Z", "body": "Added a shards-warmed gauge sampled per shard completion and wired it into the shared dashboard. On-call can now watch a restore progress in near real time instead of guessing. Resolving." }
+  ]
+}

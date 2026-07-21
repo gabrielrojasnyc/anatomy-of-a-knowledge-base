@@ -1,0 +1,17 @@
+{
+  "key": "HEL-112",
+  "summary": "Serving latency spike after router deploy",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["serving"],
+  "createdAt": "2025-03-05T10:00:00Z",
+  "resolvedAt": "2025-03-05T13:45:00Z",
+  "reporter": "Owen Reyes",
+  "description": "p99 latency doubled within minutes of a routine router deploy. No error rate increase, just latency. Rolled back within the hour.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2025-03-05T10:15:00Z", "body": "New build of src/serving/router.ts changed the random replica pick to iterate the full replica list per request instead of indexing directly. Fine at low replica counts, expensive at our current fleet size." },
+    { "author": "Elena Petrova", "at": "2025-03-05T10:40:00Z", "body": "Rolled back per the deploy runbook, latency back to baseline within five minutes of the flip." },
+    { "author": "Owen Reyes", "at": "2025-03-05T13:40:00Z", "body": "Fixed the pick function to index directly instead of iterating, re-deployed with a load test this time. Latency flat. Resolving." },
+    { "author": "Sam Whitfield", "at": "2025-03-05T13:42:00Z", "body": "nice catch" }
+  ]
+}

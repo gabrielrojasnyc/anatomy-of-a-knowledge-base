@@ -1,0 +1,18 @@
+{
+  "key": "HEL-530",
+  "summary": "ERR_MANIFEST_TIMEOUT thrown during restore against eu-west object storage",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["storage", "restore"],
+  "createdAt": "2026-05-28T08:15:00Z",
+  "resolvedAt": "2026-05-28T13:40:00Z",
+  "reporter": "Owen Reyes",
+  "description": "Restores against the eu-west cluster started failing with ERR_MANIFEST_TIMEOUT thrown from src/restore/fetcher.ts. The error names the manifest path and the configured deadline, thirty seconds, and it is tripping consistently rather than intermittently, unlike a normal transient blip.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-05-28T08:40:00Z", "body": "fetchWithDeadline aborts via the controller once HELIOS_MANIFEST_TIMEOUT_MS elapses and throws ERR_MANIFEST_TIMEOUT naming the path and the deadline, exactly what we're seeing. Checking object storage status for eu-west now." },
+    { "author": "Sam Whitfield", "at": "2026-05-28T08:42:00Z", "body": "seeing the same on my end, thought it was just me" },
+    { "author": "Priya Natarajan", "at": "2026-05-28T09:15:00Z", "body": "Object storage in eu-west is degraded, response times for large objects are running four to five times normal. The thirty second deadline in src/restore/fetcher.ts was sized for typical latency and has no margin for this kind of regional slowdown." },
+    { "author": "Priya Natarajan", "at": "2026-05-28T13:30:00Z", "body": "Storage provider confirmed the regional slowdown and gave an ETA for recovery, but rather than wait we raised HELIOS_MANIFEST_TIMEOUT_MS to 120 seconds for eu-west specifically. Restores are completing again, just slower than usual. Root cause is the slow object storage backend, not a bug in the fetch logic itself. Resolving, will revisit the deadline once the provider confirms recovery." },
+    { "author": "Owen Reyes", "at": "2026-05-28T13:40:00Z", "body": "Confirmed restores succeeding again on my end. Thanks for the quick mitigation." }
+  ]
+}

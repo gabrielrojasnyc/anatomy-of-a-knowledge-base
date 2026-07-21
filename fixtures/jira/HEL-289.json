@@ -1,0 +1,16 @@
+{
+  "key": "HEL-289",
+  "summary": "Config validator accepts malformed replica count of zero via string coercion",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["serving"],
+  "createdAt": "2026-04-02T14:00:00Z",
+  "resolvedAt": "2026-04-03T10:00:00Z",
+  "reporter": "Owen Reyes",
+  "description": "validateServingConfig in src/serving/configValidate.ts is supposed to reject a replica count below one, but a config with HELIOS_REPLICA_COUNT set to an empty string was slipping through as zero instead of falling back to the default.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2026-04-02T14:20:00Z", "body": "readInt in src/config/env.ts checks !raw before parsing, and an empty string is falsy in JS, so this should already fall back to the default. Digging further, the actual path was a whitespace-only string, which is truthy and parses to NaN, and Number.isFinite(NaN) is false so it should also fall back... need to reproduce exactly." },
+    { "author": "Owen Reyes", "at": "2026-04-03T09:40:00Z", "body": "Found it: the deploy pipeline templated an unset variable into the env file as the literal string \"0\", not empty. That is valid input to readInt and parses to zero cleanly, then validateServingConfig should reject it, which it does. The real gap was the pipeline templating, not the code." },
+    { "author": "Elena Petrova", "at": "2026-04-03T10:00:00Z", "body": "Fixed the pipeline template to omit the variable entirely instead of stringifying an unset value. Confirmed configValidate now correctly aborts startup on the old bad template. Resolving." }
+  ]
+}

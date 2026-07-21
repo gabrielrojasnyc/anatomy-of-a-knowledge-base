@@ -1,0 +1,9 @@
+{
+  "id": "HEL-021",
+  "title": "Deploy Process: Canary Rollouts",
+  "space": "HELIOS",
+  "authors": ["Owen Reyes"],
+  "updatedAt": "2026-06-05T10:20:00Z",
+  "labels": ["deploy", "serving", "process"],
+  "bodyMarkdown": "This page replaces the blue-green process described in HEL-020. Canary is now the default way Helios ships a new serving version.\n\n## Why we changed\nBlue-green gave a clean cutover but no gradual exposure: a bad deploy hit all traffic the instant the router flipped. Several near-misses over the past year made the case for shipping to a small slice of traffic first and watching it before going wide. The team decision to adopt canary as default is recorded in HEL-455.\n\n## Overview\nA small new replica set is brought up alongside the existing stable set. src/serving/router.ts is given a canary weight, starting near five percent, so only that fraction of requests reach the new version while the rest continue on stable.\n\n## Steps\nDeploy the canary replica set, set an initial weight of five percent. Watch error rate and latency on the canary pool specifically for at least fifteen minutes. Ramp the weight in stages, typically five, twenty five, then one hundred percent, watching metrics at each stage. If any stage regresses, set the weight back to zero immediately rather than continuing to ramp.\n\n## Rollback\nSetting canary weight to zero is the rollback, no separate flip is needed. See the serving rollback runbook.\n\n## Owner\nOwen Reyes owns this process. Blue-green tooling from HEL-020 is deprecated but not yet removed."
+}

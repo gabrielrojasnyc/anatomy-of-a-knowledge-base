@@ -1,0 +1,9 @@
+{
+  "id": "HEL-012",
+  "title": "Architecture: Restore Pipeline",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2025-10-08T13:30:00Z",
+  "labels": ["architecture", "restore", "checkpoint"],
+  "bodyMarkdown": "Deeper dive on the restore path referenced from the architecture overview.\n\n## Stages\nRestore has four stages, coordinated by src/restore/coordinator.ts. First, fetch the manifest from object storage, handled by src/restore/fetcher.ts with retry and a bounded deadline. Second, parse and validate the manifest, handled by src/checkpoint/manifest.ts, which checksums every shard entry. Third, warm the shard cache, handled by src/checkpoint/loader.ts pulling shard bytes through src/checkpoint/shardCache.ts. Fourth, a lightweight post-restore verification confirms the byte count pulled matches what the manifest fetch reported.\n\n## Failure handling\nEach stage fails independently and loudly. A manifest fetch that exceeds its deadline raises a clearly named error rather than hanging; a checksum mismatch during validation raises before any shard is trusted; a shard cache warm failure surfaces the specific shard key that failed.\n\n## Why coordinate rather than inline\nEarlier versions of this pipeline had the CLI call each stage directly. Centralizing it in RestoreCoordinator meant the serving startup path and the CLI both get the same retry and verification behavior for free, instead of drifting apart over time.\n\n## Owner\nPriya Natarajan, storage and checkpoint lead."
+}

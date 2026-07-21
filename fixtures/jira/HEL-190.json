@@ -1,0 +1,16 @@
+{
+  "key": "HEL-190",
+  "summary": "CLI flags parser rejects negative prefetch depth without clear message",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["cli"],
+  "createdAt": "2025-09-08T10:00:00Z",
+  "resolvedAt": "2025-09-09T11:00:00Z",
+  "reporter": "Sam Whitfield",
+  "description": "Running the CLI with --prefetch-depth -1 crashes with a raw stack trace instead of a helpful error. Expected the same clean validation message we get from other bad flag values.",
+  "comments": [
+    { "author": "Jonah Kim", "at": "2025-09-08T10:20:00Z", "body": "Confirmed, parseFlags in src/cli/flags.ts checks Number.isFinite and value < 1 but Number.parseInt(\"-1\") passes both, so the malformed check never trips for negative numbers specifically. Wait, actually the bug is the finite check runs before we realize -1 also fails value < 1, but the error message path wasn't hit because of an operator precedence slip." },
+    { "author": "Jonah Kim", "at": "2025-09-09T10:50:00Z", "body": "Root cause was simpler: the check was written correctly but a test stub earlier in the call chain swallowed the thrown error and re-threw a generic one. Fixed the swallow, negative values now surface the intended message." },
+    { "author": "Sam Whitfield", "at": "2025-09-09T11:00:00Z", "body": "confirmed clean error now, thanks" }
+  ]
+}

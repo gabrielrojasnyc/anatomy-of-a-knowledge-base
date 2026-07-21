@@ -1,0 +1,16 @@
+{
+  "key": "HEL-233",
+  "summary": "Router misroutes requests when replica set is empty",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["serving"],
+  "createdAt": "2025-12-11T08:50:00Z",
+  "resolvedAt": "2025-12-11T12:00:00Z",
+  "reporter": "Elena Petrova",
+  "description": "During a rolling restart where every replica briefly reported unhealthy, pick() in src/serving/router.ts threw an unhandled error instead of the API layer returning a clean 503-equivalent response to the caller.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2025-12-11T09:10:00Z", "body": "pick() correctly throws when the healthy pool is empty, that part is by design. The gap is in src/api/http.ts, which does not catch that specific error and instead lets it bubble as an unhandled rejection." },
+    { "author": "Owen Reyes", "at": "2025-12-11T11:50:00Z", "body": "Added a catch in handleRequest that maps a no-healthy-replicas error to a clean service-unavailable response instead of crashing the request handler. Tested with a forced empty replica set. Resolving." },
+    { "author": "Elena Petrova", "at": "2025-12-11T12:00:00Z", "body": "Confirmed the rolling restart no longer produces unhandled errors in the logs. Thanks." }
+  ]
+}

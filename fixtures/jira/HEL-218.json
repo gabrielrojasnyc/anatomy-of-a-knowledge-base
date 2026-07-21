@@ -1,0 +1,17 @@
+{
+  "key": "HEL-218",
+  "summary": "Auth token refresh race lets an expired token through briefly",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["api"],
+  "createdAt": "2025-11-04T13:00:00Z",
+  "resolvedAt": "2025-11-05T10:30:00Z",
+  "reporter": "Owen Reyes",
+  "description": "Internal tooling that refreshes its own token just before expiry occasionally sends a request with the old, now-expired token while the new one is still propagating, and verifyToken in src/api/auth.ts accepts it.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2025-11-04T13:30:00Z", "body": "The expiry check compares payload.exp against Date.now() at verification time, which is correct in isolation. The race is that the tooling reads its cached token before the refresh finishes writing the new one, so it sends a token that was valid when read but expires a second later mid-flight." },
+    { "author": "Jonah Kim", "at": "2025-11-04T13:35:00Z", "body": "that's a client-side caching bug more than an auth.ts bug, no?" },
+    { "author": "Owen Reyes", "at": "2025-11-05T10:20:00Z", "body": "Agreed on root cause, but we tightened auth.ts too: added a small grace window is the wrong fix, instead we fixed the tooling to re-read the token right before send instead of caching it across the refresh boundary. Verified with a hundred consecutive refresh cycles, no more races. Resolving." },
+    { "author": "Sam Whitfield", "at": "2025-11-05T10:25:00Z", "body": "ack" }
+  ]
+}

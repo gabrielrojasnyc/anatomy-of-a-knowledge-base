@@ -1,0 +1,16 @@
+{
+  "key": "HEL-205",
+  "summary": "Shard cache pin count leaks when restore fails mid-warm",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["checkpoint", "storage"],
+  "createdAt": "2025-10-16T09:40:00Z",
+  "resolvedAt": "2025-10-17T14:00:00Z",
+  "reporter": "Owen Reyes",
+  "description": "After a restore fails partway through warmShardCache, the shards it already pinned stay pinned forever, slowly starving the cache budget across repeated failed restores on the same host.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2025-10-16T10:10:00Z", "body": "Confirmed. pin() in src/checkpoint/shardCache.ts has no matching release() call anywhere in the failure path of warmShardCache, only the success path releases as it goes... actually it doesn't release at all today, callers are expected to release explicitly and nothing does after a failed restore." },
+    { "author": "Sam Whitfield", "at": "2025-10-16T10:15:00Z", "body": "yep seeing this on my staging box, cache is basically full of stale pins" },
+    { "author": "Priya Natarajan", "at": "2025-10-17T13:50:00Z", "body": "Added a finally block in the restore coordinator that releases every shard pinned during the attempt, success or failure. Verified pin count returns to zero after a forced failure. Resolving." }
+  ]
+}

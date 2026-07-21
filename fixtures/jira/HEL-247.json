@@ -1,0 +1,16 @@
+{
+  "key": "HEL-247",
+  "summary": "Manifest checksum validation false negative on empty shard list",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["checkpoint", "storage"],
+  "createdAt": "2026-01-09T09:15:00Z",
+  "resolvedAt": "2026-01-09T15:00:00Z",
+  "reporter": "Priya Natarajan",
+  "description": "A malformed manifest with an empty shards array still passes validateShards in src/checkpoint/manifest.ts because the checksum of an empty string join matches whatever checksum field happens to be an empty string too, which some producers left unset.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-01-09T09:40:00Z", "body": "Confirmed. createHash on an empty join produces a fixed digest, but a manifest with checksum left as an empty string or undefined does not match that digest either, so today it correctly fails on empty shards, good. The actual bug is narrower: a manifest with exactly one shard whose checksum field is empty string can produce a matching digest by coincidence if checksum was also left empty at the top level." },
+    { "author": "Jonah Kim", "at": "2026-01-09T09:45:00Z", "body": "that's a nasty edge case, good catch" },
+    { "author": "Priya Natarajan", "at": "2026-01-09T14:50:00Z", "body": "Added an explicit check that shards.length > 0 and every shard checksum is a non-empty string before computing the digest at all. Verified the coincidence case now fails loudly. Resolving." }
+  ]
+}

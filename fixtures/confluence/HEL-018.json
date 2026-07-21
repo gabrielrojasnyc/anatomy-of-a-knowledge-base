@@ -1,0 +1,9 @@
+{
+  "id": "HEL-018",
+  "title": "Team Norms: Incident Response",
+  "space": "HELIOS",
+  "authors": ["Elena Petrova"],
+  "updatedAt": "2026-03-05T10:00:00Z",
+  "labels": ["team-norms", "incident", "sre"],
+  "bodyMarkdown": "How the Helios team runs an incident, from first page to writeup.\n\n## Declaring an incident\nAny customer-facing degradation gets a JIRA incident opened immediately, even before root cause is known. Do not wait for confirmation that something is actually broken, false alarms are cheap, silent outages are not.\n\n## During the incident\nOne person drives, everyone else stays out of their way unless asked. The driver posts status updates at a steady cadence, even a no-change update, so people are not left guessing. Mitigation comes before root cause: roll back a bad deploy or fail over a bad host before spending time understanding why it broke.\n\n## Resolution\nAn incident is resolved once customer impact has stopped, not once root cause is fully understood. Root cause work can continue afterward and often turns into a follow-up ticket or an RFC.\n\n## Writeup\nEvery incident gets a comment summarizing root cause and fix once known, so future on-calls searching the history find it. Several of our runbooks exist because an incident writeup got promoted into one.\n\n## Owner\nElena Petrova owns this process, propose changes to her directly."
+}

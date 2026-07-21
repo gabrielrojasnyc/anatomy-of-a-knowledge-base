@@ -1,0 +1,9 @@
+{
+  "id": "HEL-013",
+  "title": "Architecture: Metrics and Observability",
+  "space": "HELIOS",
+  "authors": ["Elena Petrova"],
+  "updatedAt": "2025-10-22T10:05:00Z",
+  "labels": ["architecture", "metrics", "sre"],
+  "bodyMarkdown": "Overview of how Helios collects and exports operational metrics.\n\n## Collection\nsrc/metrics/stats.ts holds an in-process buffer of samples, plus histogram buckets for latency and size distributions used across serving and restore. Any module can call record with a metric name, value, and tags; nothing about the caller needs to know how the sample gets shipped out.\n\n## Export\nsrc/metrics/exporter.ts drains the buffer on an interval and posts it to the collector. If the flush fails, samples in that batch are dropped rather than retried, we intentionally favor a lossy exporter over one that can build unbounded backlog during an outage.\n\n## Dashboards\nThe shared dashboard covers request latency percentiles, replica health, restore duration, and shard cache hit rate. On-call should know where this lives before their first shift, see the on-call guide.\n\n## Gaps\nRestore progress is not currently exported as a metric, only start and completion are visible. A feature request is open to expose incremental progress.\n\n## Owner\nElena Petrova owns the metrics and exporter modules and the dashboard."
+}

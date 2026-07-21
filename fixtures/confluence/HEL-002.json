@@ -1,0 +1,9 @@
+{
+  "id": "HEL-002",
+  "title": "Helios Architecture Overview",
+  "space": "HELIOS",
+  "authors": ["Maya Okafor"],
+  "updatedAt": "2025-02-18T14:00:00Z",
+  "labels": ["architecture", "overview"],
+  "bodyMarkdown": "Helios is our model-serving platform. This page is the map for new readers before they dive into runbooks or RFCs.\n\n## Components\nThree subsystems make up Helios. Checkpoint handles loading and restoring trained weights from object storage, with the loader and shard cache living under src/checkpoint. Serving accepts inference requests and routes them across replicas. Restore coordinates a full checkpoint pull end to end, chaining the fetcher, loader, and a post-restore verifier.\n\n## Data flow\nA restore begins with a manifest fetch from object storage, proceeds through manifest parsing and checksum validation, then warms the shard cache before serving accepts traffic against the loaded weights. Metrics are sampled throughout and exported on an interval.\n\n## Ownership\nPriya Natarajan owns storage and the shard cache. Owen Reyes owns serving and the request path. Elena Petrova owns SRE concerns: rollouts, on call, and observability. Jonah Kim owns the compiler that produces the kernels Helios serves.\n\n## Where to go next\nNew engineers should read the dev setup and staging access pages before touching any of this in a real cluster. Anyone debugging a stalled restore should start at the checkpoint restore runbook."
+}

@@ -1,0 +1,9 @@
+{
+  "id": "HEL-009",
+  "title": "Runbook: Rolling Back a Serving Deploy",
+  "space": "HELIOS",
+  "authors": ["Elena Petrova"],
+  "updatedAt": "2025-08-25T16:10:00Z",
+  "labels": ["runbook", "serving", "sre"],
+  "bodyMarkdown": "How to roll back a bad serving deploy, regardless of whether it went out blue-green or canary.\n\n## When to roll back\nAny sustained rise in error rate or latency after a deploy, or a config validation failure reported by src/serving/configValidate.ts that the deploy pipeline did not catch pre-rollout. Do not wait for a full incident review to decide, roll back first and investigate after traffic is healthy.\n\n## Rollback steps\nRevert the deploy through the same pipeline that shipped it, targeting the last known-good replica set. For a canary rollout, this means setting the canary weight in src/serving/router.ts back to zero and letting stable replicas absorb all traffic before tearing the canary set down. For a blue-green rollout, this means flipping the router back to the previous color.\n\n## Verifying the rollback\nWatch the metrics exporter dashboard for error rate and p99 latency to return to baseline, usually within a few minutes. Confirm no replica from the bad deploy is still receiving traffic.\n\n## Afterward\nFile an incident if customer-facing impact occurred. Elena Petrova owns this runbook and SRE on-call generally, page her rotation for anything unclear."
+}

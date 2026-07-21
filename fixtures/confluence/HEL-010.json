@@ -1,0 +1,9 @@
+{
+  "id": "HEL-010",
+  "title": "Team Norms: Code Review Expectations",
+  "space": "HELIOS",
+  "authors": ["Maya Okafor"],
+  "updatedAt": "2025-04-15T12:00:00Z",
+  "labels": ["team-norms", "process"],
+  "bodyMarkdown": "How the Helios team reviews code. Written down so expectations do not depend on who happens to review your change.\n\n## Turnaround\nFirst review pass within one business day. If you are swamped, say so in the channel rather than letting a review sit silent, someone else will pick it up.\n\n## What reviewers check\nCorrectness first, then whether the change matches existing idioms in the touched module. A change to src/checkpoint should read like the rest of src/checkpoint. Style nits are fine but should not block a merge on their own; leave them as non-blocking comments.\n\n## Who reviews what\nPriya Natarajan reviews storage and checkpoint changes. Owen Reyes reviews serving and the API surface. Elena Petrova reviews anything touching metrics, deploy tooling, or on-call runbooks. Jonah Kim reviews compiler changes. Cross-cutting changes need one reviewer from each affected area.\n\n## Small PRs\nPrefer several small, reviewable changes over one large one. A PR that touches five modules to fix one bug is a sign the fix should be split, or that the bug is bigger than it looked.\n\n## Disagreements\nIf reviewer and author disagree after one round of discussion, loop in Maya Okafor rather than let a PR stall indefinitely."
+}

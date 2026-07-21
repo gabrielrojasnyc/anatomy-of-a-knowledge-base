@@ -1,0 +1,9 @@
+{
+  "id": "HEL-016",
+  "title": "API Authentication Guide",
+  "space": "HELIOS",
+  "authors": ["Owen Reyes"],
+  "updatedAt": "2026-01-14T09:50:00Z",
+  "labels": ["api", "auth", "serving"],
+  "bodyMarkdown": "How callers authenticate against the Helios serving API.\n\n## Token model\nRequests carry a signed bearer token issued by src/api/auth.ts. Tokens encode a subject, a list of scopes, and an expiry, and are verified on every request before it reaches the router. There is no session state on the server beyond the token itself.\n\n## Requesting a token\nService accounts get long-lived tokens issued during provisioning. Human callers, mostly for debugging against staging, request a short-lived token through the internal tooling, default expiry one hour.\n\n## Scopes\nThe common scope is serve:invoke, required for any inference request. An admin scope exists for internal tooling and bypasses individual scope checks; it is not handed out to service accounts.\n\n## Failure modes\nAn expired token or a bad signature both fail closed with a rejected request, no partial trust. If your token is being rejected unexpectedly, check the expiry first, that is the most common cause.\n\n## Owner\nOwen Reyes owns the API and auth surface. File requests for new scopes with him."
+}

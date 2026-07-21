@@ -1,0 +1,15 @@
+{
+  "key": "HEL-274",
+  "summary": "Metrics stats histogram bucket overflow undercounts high latency requests",
+  "type": "Bug",
+  "status": "In Progress",
+  "components": ["metrics"],
+  "createdAt": "2026-03-06T11:00:00Z",
+  "reporter": "Elena Petrova",
+  "description": "The latency histogram in src/metrics/stats.ts tracks overflow as a single counter with no bucket boundary information, so we cannot tell whether an overflow spike was requests at 2x the top bucket or 100x. Makes some incidents harder to size.",
+  "comments": [
+    { "author": "Elena Petrova", "at": "2026-03-06T11:20:00Z", "body": "This is by design today, Histogram.observe just increments overflow with no value retained. Not strictly a bug, more a gap, but filing it as one since it has bitten two incident investigations already." },
+    { "author": "Owen Reyes", "at": "2026-03-06T11:30:00Z", "body": "agreed it should at least track max observed value alongside the overflow count" },
+    { "author": "Elena Petrova", "at": "2026-03-10T09:00:00Z", "body": "Working on adding a running max to the overflow path, should be a small change. Not done yet, still testing against a synthetic load." }
+  ]
+}

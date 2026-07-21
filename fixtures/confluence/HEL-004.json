@@ -1,0 +1,9 @@
+{
+  "id": "HEL-004",
+  "title": "Onboarding: Dev Environment Setup",
+  "space": "HELIOS",
+  "authors": ["Sam Whitfield"],
+  "updatedAt": "2025-03-11T09:15:00Z",
+  "labels": ["onboarding", "dev-setup"],
+  "bodyMarkdown": "Get the Helios repo running locally before your first week is out.\n\n## Prerequisites\nNode 20, a recent Rust toolchain for the compiler bits Jonah's team owns, and access to the staging cluster from HEL-003 if you want to exercise anything against real infrastructure.\n\n## Clone and install\nClone the helios repo, run the install script at the root. It pulls dependencies for every package under src, including checkpoint, serving, restore, api, metrics, and cli.\n\n## Running locally\nThe cli entry point at src/cli/main.ts supports a verify command that prints the resolved config without touching a real cluster, a good first smoke test. Try HELIOS_PREFETCH_DEPTH=4 to see the config plumbing pick up an env override.\n\n## Editor setup\nWe do not mandate an editor, but the repo ships lint config that most editors will pick up automatically. Format on save avoids noisy diffs in review.\n\n## Getting unstuck\nPost in the team channel, do not sit stuck for more than thirty minutes. Sam Whitfield wrote this page and is happy to pair on setup issues."
+}

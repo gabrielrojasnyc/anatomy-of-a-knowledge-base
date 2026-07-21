@@ -1,0 +1,16 @@
+{
+  "key": "HEL-134",
+  "summary": "Metrics exporter drops samples under load",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["metrics"],
+  "createdAt": "2025-05-20T08:30:00Z",
+  "resolvedAt": "2025-05-20T12:10:00Z",
+  "reporter": "Elena Petrova",
+  "description": "Dashboards showed gaps during a traffic spike this morning. The exporter is designed to drop samples on a failed flush rather than backlog, but we saw drops even though the collector never returned an error.",
+  "comments": [
+    { "author": "Elena Petrova", "at": "2025-05-20T09:00:00Z", "body": "src/metrics/exporter.ts posts the full drained batch in one request. During the spike, batches got large enough that the request itself timed out client side, which we count as a failed flush and drop the batch." },
+    { "author": "Owen Reyes", "at": "2025-05-20T09:10:00Z", "body": "makes sense, one big request instead of many small ones is going to hit that wall eventually" },
+    { "author": "Elena Petrova", "at": "2025-05-20T12:00:00Z", "body": "Mitigated for now by shortening the export interval so batches stay small. A proper fix would chunk large batches into multiple requests, filed as a follow-up feature. Resolving the incident." }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "key": "HEL-470",
+  "summary": "Decision: standardize on structured JSON logs across all Helios services",
+  "type": "Decision",
+  "status": "Accepted",
+  "components": ["sre", "metrics"],
+  "createdAt": "2025-06-05T09:00:00Z",
+  "resolvedAt": "2025-06-09T14:00:00Z",
+  "reporter": "Elena Petrova",
+  "description": "Proposal to require every Helios service to log through src/util/log.ts rather than plain console output, so every log line is structured JSON with a level and timestamp, and can carry arbitrary fields like request or job ids consistently.",
+  "comments": [
+    { "author": "Elena Petrova", "at": "2025-06-05T09:20:00Z", "body": "This is a prerequisite for reliable log-based alerting and for the request-id tracing work we keep wanting to do, see the eventual follow-up in HEL-360." },
+    { "author": "Jonah Kim", "at": "2025-06-05T10:00:00Z", "body": "fine by me for compiler-adjacent tooling too, will migrate any stray console.log calls" },
+    { "author": "Priya Natarajan", "at": "2025-06-06T09:00:00Z", "body": "in favor, structured logs will make grepping incident logs much less painful" },
+    { "author": "Elena Petrova", "at": "2025-06-09T14:00:00Z", "body": "Decision accepted: all new code logs through util/log.ts, existing console calls migrated opportunistically rather than in one big sweep. Resolving." }
+  ]
+}

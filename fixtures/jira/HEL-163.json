@@ -1,0 +1,16 @@
+{
+  "key": "HEL-163",
+  "summary": "Backoff misconfiguration causes retry storm against object storage",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["storage", "restore"],
+  "createdAt": "2025-08-14T12:10:00Z",
+  "resolvedAt": "2025-08-14T14:50:00Z",
+  "reporter": "Priya Natarajan",
+  "description": "A brief object storage blip triggered a much longer self-inflicted outage: hundreds of restores retrying in near lockstep against src/restore/fetcher.ts overwhelmed storage well after the original blip cleared.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2025-08-14T12:30:00Z", "body": "withRetry in src/util/backoff.ts has jitter enabled by default, but a batch job that kicks off many restores at once was passing jitter false to make retry timing predictable for its own logging. That's what synchronized the retries." },
+    { "author": "Jonah Kim", "at": "2025-08-14T12:35:00Z", "body": "ouch, that's a rough interaction" },
+    { "author": "Priya Natarajan", "at": "2025-08-14T14:45:00Z", "body": "Removed the jitter override in the batch job, retries now spread naturally and storage recovered within minutes of the change. Resolving. We should consider making jitter non-optional." }
+  ]
+}

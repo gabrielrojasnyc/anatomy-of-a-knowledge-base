@@ -1,0 +1,17 @@
+{
+  "key": "HEL-141",
+  "summary": "Staging cluster auth outage blocks new onboarding",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["api", "staging"],
+  "createdAt": "2025-06-18T13:00:00Z",
+  "resolvedAt": "2025-06-18T15:20:00Z",
+  "reporter": "Sam Whitfield",
+  "description": "Two new hires could not get tokens issued against staging this morning, blocking the first day setup described in the onboarding pages. Token requests returned a signature error for every subject.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2025-06-18T13:20:00Z", "body": "The token secret in src/api/auth.ts was rotated yesterday for staging but the issuing side of internal tooling still had the old secret cached. Every newly issued token failed verification against the new secret." },
+    { "author": "Elena Petrova", "at": "2025-06-18T13:25:00Z", "body": "confirmed, restarting the tooling service to pick up the new secret now" },
+    { "author": "Owen Reyes", "at": "2025-06-18T15:15:00Z", "body": "Fixed once the tooling service restarted and picked up the current secret. New tokens verify correctly. Sam, your onboarding folks should be unblocked now." },
+    { "author": "Sam Whitfield", "at": "2025-06-18T15:20:00Z", "body": "confirmed both got in, thanks for the fast turnaround" }
+  ]
+}

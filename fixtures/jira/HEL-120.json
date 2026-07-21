@@ -1,0 +1,17 @@
+{
+  "key": "HEL-120",
+  "summary": "Compiler OOM on large batch graphs",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["compiler"],
+  "createdAt": "2025-04-12T09:20:00Z",
+  "resolvedAt": "2025-04-14T16:00:00Z",
+  "reporter": "Maya Okafor",
+  "description": "Compiling a graph with batch size above 512 reliably OOM kills the compiler process on our standard build hosts. Smaller batches compile fine.",
+  "comments": [
+    { "author": "Jonah Kim", "at": "2025-04-12T11:00:00Z", "body": "Reproduced. The fusion pass holds intermediate tensors for the whole graph in memory at once before lowering, that's quadratic-ish in batch size for some fusion patterns." },
+    { "author": "Sam Whitfield", "at": "2025-04-12T11:05:00Z", "body": "ack, will steer clear of large batch compiles until this is fixed" },
+    { "author": "Jonah Kim", "at": "2025-04-14T15:50:00Z", "body": "Fixed by streaming the fusion pass in chunks instead of holding the full graph. Verified batch 2048 compiles under the memory ceiling now. This does not affect anything in src/serving, purely a compiler-side change." },
+    { "author": "Maya Okafor", "at": "2025-04-14T16:00:00Z", "body": "Great, thanks for the quick turnaround." }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "key": "HEL-315",
+  "summary": "CLI main crashes with unhandled rejection on missing config path",
+  "type": "Bug",
+  "status": "Open",
+  "components": ["cli"],
+  "createdAt": "2026-05-13T09:00:00Z",
+  "reporter": "Sam Whitfield",
+  "description": "Running the CLI with a --config path that does not exist prints an unhandled rejection stack trace instead of the clean error message main() is supposed to produce via its catch handler.",
+  "comments": [
+    { "author": "Jonah Kim", "at": "2026-05-13T09:30:00Z", "body": "Looking into it, the fileExists check in main.ts should catch this before reloadConfig even runs, so the thrown error should hit the catch at the bottom of main.ts cleanly. Might be a timing issue with how the promise chain is set up, not obviously wrong at a glance." },
+    { "author": "Sam Whitfield", "at": "2026-05-13T09:35:00Z", "body": "happy to send you the exact repro command if that helps" }
+  ]
+}

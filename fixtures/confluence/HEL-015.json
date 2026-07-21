@@ -1,0 +1,9 @@
+{
+  "id": "HEL-015",
+  "title": "Compiler Overview",
+  "space": "HELIOS",
+  "authors": ["Jonah Kim"],
+  "updatedAt": "2025-12-03T14:20:00Z",
+  "labels": ["compiler", "architecture"],
+  "bodyMarkdown": "Short overview of the compiler that produces the kernels Helios serves, for engineers whose work touches serving or restore but not the compiler itself.\n\n## What it does\nTakes a model graph and lowers it to fused kernels tuned for our hardware. Fusion decisions affect both throughput and memory footprint, which is why serving capacity planning sometimes needs compiler input.\n\n## Relationship to serving\nThe compiler is a separate build step, not something serving invokes at request time. A model is compiled once, the output artifact is what src/serving actually loads and runs. If a kernel is misbehaving in production, the fix almost always lands in the compiler repo, not in src/serving.\n\n## Common failure modes\nOp ordering bugs in fused kernels are the most frequent compiler issue that surfaces downstream, usually as a subtle correctness problem rather than a crash. Out-of-memory during compilation of very large batch graphs is the second most common, distinct from any runtime OOM.\n\n## Where to ask questions\nJonah Kim owns the compiler. For anything that looks compiler-shaped, tag him early rather than debugging deep into serving first."
+}

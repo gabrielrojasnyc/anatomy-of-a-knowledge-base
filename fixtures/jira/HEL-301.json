@@ -1,0 +1,16 @@
+{
+  "key": "HEL-301",
+  "summary": "Backoff jitter not applied on fetcher retries when caller overrides maxAttempts",
+  "type": "Bug",
+  "status": "Resolved",
+  "components": ["storage", "restore"],
+  "createdAt": "2026-04-25T10:30:00Z",
+  "resolvedAt": "2026-04-26T09:00:00Z",
+  "reporter": "Priya Natarajan",
+  "description": "Follow-up from HEL-163: when a caller of fetchManifest passes a custom maxAttempts through withRetry in src/util/backoff.ts, the jitter flag from the default options gets dropped entirely instead of merged, so retries against object storage synchronize again under the same conditions that caused the earlier incident.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2026-04-25T10:50:00Z", "body": "The spread in withRetry does merge options over DEFAULT_OPTIONS correctly, so this isn't a bug in backoff.ts itself. It's callers constructing a fresh partial options object with only maxAttempts set, which is fine, jitter should still default to true from the merge. Need to find the actual caller doing this wrong." },
+    { "author": "Priya Natarajan", "at": "2026-04-26T08:40:00Z", "body": "Found it: one internal batch tool calls computeDelayMs directly instead of going through withRetry, and passes jitter false explicitly, same root cause pattern as HEL-163 but a different caller. Fixed that caller to stop overriding jitter. Resolving." },
+    { "author": "Sam Whitfield", "at": "2026-04-26T08:45:00Z", "body": "ack, good that this got caught before it repeated at scale" }
+  ]
+}

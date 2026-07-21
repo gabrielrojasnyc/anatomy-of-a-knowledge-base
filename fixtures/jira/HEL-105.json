@@ -1,0 +1,17 @@
+{
+  "key": "HEL-105",
+  "summary": "Shard cache eviction storm during peak restore load",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["checkpoint", "storage"],
+  "createdAt": "2025-02-10T14:00:00Z",
+  "resolvedAt": "2025-02-11T09:30:00Z",
+  "reporter": "Maya Okafor",
+  "description": "Three concurrent restores on the same host caused the shard cache to thrash, evicting and re-fetching the same shards repeatedly. Restore times tripled during the window.",
+  "comments": [
+    { "author": "Priya Natarajan", "at": "2025-02-10T14:20:00Z", "body": "The cache byte budget in src/checkpoint/shardCache.ts is per-process, not per-host, so three restores on one host effectively divided the budget three ways without knowing it. That's the thrash." },
+    { "author": "Sam Whitfield", "at": "2025-02-10T14:25:00Z", "body": "same thing happened to me once, coffee helped" },
+    { "author": "Priya Natarajan", "at": "2025-02-11T09:25:00Z", "body": "Mitigated by capping concurrent restores per host to one in the scheduler config. Longer term the cache budget should be host-aware, filed separately. Closing this as resolved." },
+    { "author": "Maya Okafor", "at": "2025-02-11T09:30:00Z", "body": "Confirmed restore times back to baseline after the cap. Thanks Priya." }
+  ]
+}

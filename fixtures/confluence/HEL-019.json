@@ -1,0 +1,9 @@
+{
+  "id": "HEL-019",
+  "title": "Runbook: Manifest Fetch Timeouts",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2026-04-09T09:30:00Z",
+  "labels": ["runbook", "storage", "restore"],
+  "bodyMarkdown": "How to respond when a restore fails during the manifest fetch stage rather than stalling silently.\n\n## Symptoms\nThe restore fails fast rather than hanging, with an error naming the manifest path and the configured deadline. This is a different failure mode than the stall covered in the checkpoint restore runbook, that runbook is for restores that hang with no error at all.\n\n## Diagnosis\nThe fetch in src/restore/fetcher.ts is bounded by HELIOS_MANIFEST_TIMEOUT_MS, thirty seconds by default. When object storage is slow to respond, usually under load or during a regional degradation, the deadline trips before the body finishes downloading and the fetch aborts with a clearly named error rather than hanging indefinitely.\n\n## Fix\nCheck object storage status first, this is often a symptom of a broader storage slowdown rather than anything specific to Helios. If storage is healthy but a particular manifest is unusually large, raising HELIOS_MANIFEST_TIMEOUT_MS for that restore is reasonable. Retries already happen automatically through the backoff wrapper around the fetch.\n\n## Escalation\nIf fetches are timing out broadly across restores, page the storage on-call and check with the object storage provider directly. Priya Natarajan owns this runbook."
+}
