@@ -6,6 +6,7 @@ export class CerebrasError extends Error {
     public status?: number,
   ) {
     super(msg);
+    this.name = "CerebrasError";
   }
 }
 
@@ -78,6 +79,10 @@ export async function chatJSON<T>(
       ...opts,
       user: `${opts.user}\n\nYour previous reply was not valid JSON. Reply with ONLY valid JSON, no prose, no fences.`,
     });
-    return opts.validate(JSON.parse(stripFences(repaired)));
+    try {
+      return opts.validate(JSON.parse(stripFences(repaired)));
+    } catch (e) {
+      throw e instanceof CerebrasError ? e : new CerebrasError(String(e));
+    }
   }
 }

@@ -41,7 +41,8 @@ describe("cerebras client", () => {
   });
 
   it("throws CerebrasError after 3 failures", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(fail(500)));
+    const f = vi.fn().mockResolvedValue(fail(500));
+    vi.stubGlobal("fetch", f);
     await expect(
       chat({
         model: "m",
@@ -51,6 +52,7 @@ describe("cerebras client", () => {
         retryDelayMs: 1,
       }),
     ).rejects.toBeInstanceOf(CerebrasError);
+    expect(f).toHaveBeenCalledTimes(3);
   });
 
   it("chatJSON strips fences and validates", async () => {
@@ -83,6 +85,21 @@ describe("cerebras client", () => {
       validate: (x: unknown) => x as { a: number },
     });
     expect(out.a).toBe(2);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it("chatJSON throws CerebrasError when repair also fails", async () => {
+    const f = vi.fn().mockResolvedValue(ok("not json"));
+    vi.stubGlobal("fetch", f);
+    await expect(
+      chatJSON({
+        model: "m",
+        system: "s",
+        user: "u",
+        apiKey: "k",
+        validate: (x: unknown) => x as { a: number },
+      }),
+    ).rejects.toBeInstanceOf(CerebrasError);
     expect(f).toHaveBeenCalledTimes(2);
   });
 });
