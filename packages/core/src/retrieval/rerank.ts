@@ -37,7 +37,10 @@ export async function rerank(
     for (const { i, score } of parsed) {
       const c = candidates[i];
       if (c && Number.isFinite(score))
-        out.set(`${c.doc.source}:${c.doc.sourceId}`, score);
+        out.set(
+          `${c.doc.source}:${c.doc.sourceId}`,
+          Math.max(0, Math.min(10, score)),
+        );
     }
     return out.size > 0 ? out : null;
   } catch {

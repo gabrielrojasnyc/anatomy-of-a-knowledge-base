@@ -59,6 +59,24 @@ describe("rerank", () => {
       await rerank("q", [fused("a", "D1", "x")], { llm, model: "m" }),
     ).toBeNull();
   });
+
+  it("clamps scores and ignores out-of-range indexes", async () => {
+    const llm = async () =>
+      JSON.stringify([
+        { i: 0, score: 100 },
+        { i: 7, score: 5 },
+        { i: 1, score: Number.NaN },
+      ]);
+    const out = await rerank(
+      "q",
+      [fused("a", "D1", "x"), fused("a", "D2", "y")],
+      { llm, model: "m" },
+    );
+    expect(out).not.toBeNull();
+    expect(out!.get("a:D1")).toBe(10);
+    expect(out!.has("a:D2")).toBe(false);
+    expect(out!.size).toBe(1);
+  });
 });
 
 describe("expandDoc", () => {
