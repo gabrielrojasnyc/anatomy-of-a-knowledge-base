@@ -1,0 +1,17 @@
+{
+  "key": "HEL-482",
+  "summary": "Checkpoint restore stalls after manifest load on 128-shard clusters",
+  "type": "Incident",
+  "status": "Resolved",
+  "components": ["checkpoint", "storage"],
+  "createdAt": "2026-05-02T16:14:00Z",
+  "resolvedAt": "2026-05-03T11:20:00Z",
+  "reporter": "Maya Okafor",
+  "description": "Restore of the 128-shard training checkpoint hangs indefinitely after the manifest loads. Small runs are unaffected. No errors in the loader logs.",
+  "comments": [
+    { "author": "Owen Reyes", "at": "2026-05-02T16:40:00Z", "body": "Reproduced on staging with 128 shards. Logs stop right before cache warmup. Attaching loader traces." },
+    { "author": "Sam Whitfield", "at": "2026-05-02T16:41:00Z", "body": "my laptop also hangs when it sees monday" },
+    { "author": "Priya Natarajan", "at": "2026-05-03T10:55:00Z", "body": "Root cause: the default prefetch depth of 16 in src/checkpoint/loader.ts saturates the NFS mount. Setting HELIOS_PREFETCH_DEPTH=4 lets the restore complete. The default is tuned for local SSD, not network storage. Long term we should auto-detect mount type and pick a depth, filed as follow-up." },
+    { "author": "Maya Okafor", "at": "2026-05-03T11:18:00Z", "body": "Confirmed fixed with depth 4. Updating the runbook." }
+  ]
+}

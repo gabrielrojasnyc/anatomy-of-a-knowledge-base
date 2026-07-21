@@ -1,0 +1,43 @@
+{
+  "questions": [
+    { "id": "restore-stall", "project": "helios-eng",
+      "question": "Why does checkpoint restore stall after manifest load?",
+      "expect": [
+        { "source": "jira", "sourceIdPrefix": "HEL-482" },
+        { "source": "confluence", "sourceIdPrefix": "HEL-001" },
+        { "source": "github", "sourceIdPrefix": "src/checkpoint/loader.ts" } ] },
+    { "id": "retention-conflict", "project": "helios-eng",
+      "question": "How long do we retain checkpoints?",
+      "note": "Confluence policy says 30 days; a newer JIRA decision says 14. Synthesis must caveat.",
+      "expect": [
+        { "source": "confluence", "sourceIdPrefix": "HEL-014" },
+        { "source": "jira", "sourceIdPrefix": "HEL-611" } ] },
+    { "id": "who-shard-cache", "project": "helios-eng",
+      "question": "Who has expertise on the shard cache?",
+      "expectPeople": ["Priya Natarajan"] },
+    { "id": "exact-error", "project": "helios-eng",
+      "question": "What does ERR_MANIFEST_TIMEOUT mean and how do I fix it?",
+      "expect": [ { "source": "jira", "sourceIdPrefix": "HEL-530" } ] },
+    { "id": "paraphrase-serving", "project": "helios-eng",
+      "question": "The model server refuses to boot after I changed its settings",
+      "note": "No shared vocabulary with the fixture, which says config validation aborts startup.",
+      "expect": [ { "source": "confluence", "sourceIdPrefix": "HEL-007" } ] },
+    { "id": "rare-flag", "project": "helios-eng",
+      "question": "What is HELIOS_PREFETCH_DEPTH?",
+      "expect": [ { "source": "jira", "sourceIdPrefix": "HEL-482" },
+                  { "source": "github", "sourceIdPrefix": "src/config" } ] },
+    { "id": "recency-deploy", "project": "helios-eng",
+      "question": "What is the current deploy process for Helios?",
+      "note": "Two pages answer this. HEL-020 (old, blue-green) vs HEL-021 (new, canary). Newer must rank first.",
+      "expect": [ { "source": "confluence", "sourceIdPrefix": "HEL-021" } ] },
+    { "id": "staging-access", "project": "helios-eng",
+      "question": "How do I get access to the Helios staging cluster?",
+      "expect": [ { "source": "confluence", "sourceIdPrefix": "HEL-003" } ] },
+    { "id": "checksum-code", "project": "helios-eng",
+      "question": "Where is the manifest checksum validated?",
+      "expect": [ { "source": "github", "sourceIdPrefix": "src/checkpoint/manifest.ts" } ] },
+    { "id": "content-pricing", "project": "content",
+      "question": "What does the launch draft say about pricing?",
+      "expect": [ { "source": "bucket", "sourceIdPrefix": "launch-pricing-draft.md" } ] }
+  ]
+}

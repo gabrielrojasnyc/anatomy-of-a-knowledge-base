@@ -1,0 +1,9 @@
+{
+  "id": "HEL-001",
+  "title": "Runbook: Checkpoint Restore Stalls",
+  "space": "HELIOS",
+  "authors": ["Priya Natarajan"],
+  "updatedAt": "2026-06-14T09:00:00Z",
+  "labels": ["runbook", "checkpoint", "storage"],
+  "bodyMarkdown": "When a restore appears frozen, confirm whether it stalled after manifest load before escalating.\n\n## Symptoms\nRestore logs stop after the line manifest loaded. Small runs complete; clusters above 64 shards stall. CPU on the loader host drops to idle.\n\n## Diagnosis\nCheck the prefetch depth in effect. The loader in src/checkpoint/loader.ts reads HELIOS_PREFETCH_DEPTH and defaults to 16, which overwhelms NFS mounts.\n\n## Fix\nSet HELIOS_PREFETCH_DEPTH=4 on the loader hosts and restart the restore. See HEL-482 for the original incident.\n\n## Escalation\nPage the storage on-call if the stall persists past 15 minutes. Priya Natarajan owns this runbook."
+}

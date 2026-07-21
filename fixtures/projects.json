@@ -1,0 +1,6 @@
+{
+  "projects": [
+    { "name": "helios-eng", "description": "Helios engineering: runbooks, tickets, code", "sources": ["confluence", "jira", "github"] },
+    { "name": "content", "description": "Production Notes and company content", "sources": ["bucket"] }
+  ]
+}
