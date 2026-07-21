@@ -8,3 +8,6 @@ export { tokenize, computeIdf, rebuildTokenIdf, maxIdf } from "./ingest/idf.js";
 export { splitMarkdownSections, chunkTypeScript } from "./ingest/chunk.js";
 export { bucketConnector } from "./ingest/connectors/bucket.js";
 export { confluenceConnector } from "./ingest/connectors/confluence.js";
+export { githubConnector } from "./ingest/connectors/github.js";
+export { jiraConnector } from "./ingest/connectors/jira.js";
+export { groupBursts, scoreBurst } from "./ingest/burst.js";
