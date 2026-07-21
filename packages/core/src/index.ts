@@ -23,3 +23,4 @@ export {
   recencyRetriever,
   HALF_LIFE_DAYS,
 } from "./retrieval/signals.js";
+export { fuse, parentKey } from "./retrieval/rrf.js";
