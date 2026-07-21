@@ -10,10 +10,12 @@ const QUERY_PREFIX =
 let extractor: Promise<FeatureExtractionPipeline> | undefined;
 
 function getExtractor(): Promise<FeatureExtractionPipeline> {
-  extractor ??= pipeline(
-    "feature-extraction",
-    MODEL,
-  ) as Promise<FeatureExtractionPipeline>;
+  extractor ??= (
+    pipeline("feature-extraction", MODEL) as Promise<FeatureExtractionPipeline>
+  ).catch((e) => {
+    extractor = undefined;
+    throw e;
+  });
   return extractor;
 }
 
