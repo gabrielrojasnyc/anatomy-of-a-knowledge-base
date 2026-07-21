@@ -85,16 +85,22 @@ export function buildTools(
     {
       name: "search_code",
       description:
-        "Exact text or regex over the Helios codebase: flags, error strings, function names.",
+        "Exact text search over the Helios codebase: flags, error strings, function names. Prefix with re: for regex.",
       run: async ({ query }) => {
+        const raw = query.startsWith("re:") ? query.slice(3) : null;
         let re: RegExp;
-        try {
-          re = new RegExp(query, "i");
-        } catch {
+        if (raw !== null) {
+          try {
+            re = new RegExp(raw, "i");
+          } catch {
+            re = new RegExp(raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+          }
+        } else {
           re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
         }
         const out: EvidenceRow[] = [];
         for (const rel of walk(codeRoot, codeRoot).sort()) {
+          if (out.length >= 50) break;
           const lines = readFileSync(join(codeRoot, rel), "utf8").split("\n");
           for (let i = 0; i < lines.length && out.length < 50; i++) {
             if (!re.test(lines[i])) continue;

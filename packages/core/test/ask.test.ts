@@ -79,4 +79,24 @@ describe("ask", () => {
     expect(result.answer).toContain("[1]");
     expect(call).toBeGreaterThanOrEqual(2);
   });
+
+  it("dedupes evidence that two tools both return", async () => {
+    const llm = async ({ system }: { system: string }) => {
+      if (system.includes("select the best tools"))
+        return JSON.stringify({
+          tools: [
+            { name: "search_jira", query: "manifest timeout" },
+            { name: "search_jira", query: "manifest timeout" },
+          ],
+          reasoning: "twice",
+        });
+      return "answer [1]";
+    };
+    const result = await ask(pool, "what is ERR_MANIFEST_TIMEOUT?", {
+      fixturesDir: join(ROOT, "fixtures"),
+      llm,
+    });
+    const keys = result.evidence.map((e) => `${e.source}:${e.sourceId}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });

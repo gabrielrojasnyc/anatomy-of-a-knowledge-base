@@ -124,4 +124,22 @@ describe("expandDoc", () => {
     });
     expect(expanded.length).toBeGreaterThanOrEqual(doc.content.length);
   });
+
+  it("refuses path traversal in code chunk metadata", async () => {
+    const doc: RetrievedDoc = {
+      id: 0,
+      source: "github",
+      sourceId: "../../.env#1-2",
+      kind: "code_chunk",
+      title: "evil",
+      content: "original",
+      metadata: { path: "../../.env" },
+      authoredAt: null,
+      score: 1,
+    };
+    const expanded = await expandDoc(pool, doc, {
+      fixturesDir: join(ROOT, "fixtures"),
+    });
+    expect(expanded).toBe("original");
+  });
 });

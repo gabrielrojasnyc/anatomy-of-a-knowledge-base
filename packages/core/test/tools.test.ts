@@ -56,4 +56,15 @@ describe("buildTools", () => {
       "helios-eng",
     ]);
   });
+
+  it("search_code treats metacharacters literally unless re: prefix is used", async () => {
+    const literal = await get("search_code").run({
+      query: "config.prefetchDepth",
+    });
+    expect(literal.length).toBeGreaterThan(0);
+    const regex = await get("search_code").run({
+      query: "re:prefetch(Depth)?",
+    });
+    expect(regex.length).toBeGreaterThan(0);
+  });
 });

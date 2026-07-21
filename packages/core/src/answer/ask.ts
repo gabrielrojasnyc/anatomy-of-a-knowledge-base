@@ -62,7 +62,16 @@ export async function ask(
         .catch(() => [] as EvidenceRow[]);
     }),
   );
-  const evidence = settled.flat().slice(0, 20);
+  const seen = new Set<string>();
+  const evidence = settled
+    .flat()
+    .filter((e) => {
+      const k = `${e.source}:${e.sourceId}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .slice(0, 20);
 
   const numbered = evidence
     .map(

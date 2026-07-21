@@ -12,10 +12,15 @@ async function neighborSections(
   if (!Number.isFinite(idx)) return [];
   const ids = [`${base}#${idx - 1}`, `${base}#${idx + 1}`];
   const { rows } = await pool.query(
-    `SELECT raw FROM embeddings WHERE source = $1 AND source_id = ANY($2) ORDER BY source_id`,
+    `SELECT raw, source_id FROM embeddings WHERE source = $1 AND source_id = ANY($2)`,
     [doc.source, ids],
   );
-  return rows
+  const sorted = rows.sort((a, b) => {
+    const aNum = Number(a.source_id.split("#")[1]);
+    const bNum = Number(b.source_id.split("#")[1]);
+    return aNum - bNum;
+  });
+  return sorted
     .map((r) => {
       const raw = r.raw as { heading?: string | null; body?: string } | null;
       return [raw?.heading, raw?.body].filter(Boolean).join("\n");
@@ -55,16 +60,17 @@ export async function expandDoc(
       );
     }
     if (doc.kind === "code_chunk" && opts.fixturesDir) {
-      const raw = (doc.metadata.path as string) ?? doc.sourceId.split("#")[0];
+      const rel = (doc.metadata.path as string) ?? doc.sourceId.split("#")[0];
+      if (rel.includes("..")) return doc.content;
       const m = doc.sourceId.match(/#(\d+)-(\d+)$/);
       if (!m) return doc.content;
       const lines = readFileSync(
-        join(opts.fixturesDir, "github/helios", raw),
+        join(opts.fixturesDir, "github/helios", rel),
         "utf8",
       ).split("\n");
       const start = Math.max(0, Number(m[1]) - 1 - 10);
       const end = Math.min(lines.length, Number(m[2]) + 10);
-      return `File: ${raw} lines ${start + 1} to ${end}\n${lines.slice(start, end).join("\n")}`;
+      return `File: ${rel} lines ${start + 1} to ${end}\n${lines.slice(start, end).join("\n")}`;
     }
     return doc.content;
   } catch {

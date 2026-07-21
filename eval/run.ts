@@ -49,4 +49,4 @@ for (const q of questions) {
 }
 console.log(`\n${passed}/${questions.length} passed`);
 await pool.end();
-process.exit(passed >= 8 ? 0 : 1);
+process.exit(passed >= questions.length - 2 ? 0 : 1);
