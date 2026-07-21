@@ -95,8 +95,8 @@ export async function runIngest(
           }
           if (
             doc.metadata.distilled === false &&
-            connector.source !== "github" &&
-            connector.source !== "jira"
+            doc.kind !== "comment_burst" &&
+            doc.kind !== "code_chunk"
           )
             stat.degraded++;
           pending.push({ doc, hash });
@@ -107,30 +107,42 @@ export async function runIngest(
       }
     }
 
-    const vectors = await embedDocs(pending.map((p) => p.doc.content));
-    for (let i = 0; i < pending.length; i++) {
-      const { doc, hash } = pending[i];
-      await pool.query(
-        `INSERT INTO embeddings
-           (source, source_id, kind, title, content, raw, metadata, authored_at, content_hash, embedding)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         ON CONFLICT (source, source_id) DO UPDATE SET
-           kind=$3, title=$4, content=$5, raw=$6, metadata=$7, authored_at=$8,
-           content_hash=$9, embedding=$10, updated_at=now()`,
-        [
-          doc.source,
-          doc.sourceId,
-          doc.kind,
-          doc.title,
-          doc.content,
-          JSON.stringify(doc.raw),
-          JSON.stringify(doc.metadata),
-          doc.authoredAt,
-          hash,
-          vectorLiteral(vectors[i]),
-        ],
+    try {
+      const vectors = await embedDocs(pending.map((p) => p.doc.content));
+      for (let i = 0; i < pending.length; i++) {
+        const { doc, hash } = pending[i];
+        try {
+          await pool.query(
+            `INSERT INTO embeddings
+               (source, source_id, kind, title, content, raw, metadata, authored_at, content_hash, embedding)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+             ON CONFLICT (source, source_id) DO UPDATE SET
+               kind=$3, title=$4, content=$5, raw=$6, metadata=$7, authored_at=$8,
+               content_hash=$9, embedding=$10, updated_at=now()`,
+            [
+              doc.source,
+              doc.sourceId,
+              doc.kind,
+              doc.title,
+              doc.content,
+              JSON.stringify(doc.raw),
+              JSON.stringify(doc.metadata),
+              doc.authoredAt,
+              hash,
+              vectorLiteral(vectors[i]),
+            ],
+          );
+          stat.ingested++;
+        } catch (e) {
+          stat.failed++;
+          opts.log(`upsert ${doc.sourceId} failed: ${e}`);
+        }
+      }
+    } catch (e) {
+      stat.failed += pending.length;
+      opts.log(
+        `${connector.source}: embedding failed for ${pending.length} docs: ${e}`,
       );
-      stat.ingested++;
     }
     await pool.query(
       `INSERT INTO sources (name, last_synced) VALUES ($1, now())
