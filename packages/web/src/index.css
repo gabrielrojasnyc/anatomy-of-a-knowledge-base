@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.stage-enter { animation: rise 150ms ease-out; }
+@keyframes flash {
+  0% { background-color: rgb(99 102 241 / 0.15); }
+  100% { background-color: transparent; }
+}
+.evidence-flash { animation: flash 1.2s ease-out; }
