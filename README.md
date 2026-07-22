@@ -24,6 +24,8 @@ flowchart TD
   SYN --> SURF[CLI, MCP server, web UI]
 ```
 
+Four sources feed one Postgres table. Confluence and JIRA and the bucket go through LLM distillation so a noisy transcript becomes a searchable artifact; GitHub goes through a syntax-aware chunker instead, no LLM required. Every query then runs five retrievers in parallel, fuses them with reciprocal rank fusion, optionally reranks the survivors with an LLM, and only expands context for candidates that made the final cut. `packages/core` implements all of it once; the CLI, MCP server, and web UI are thin clients over the same functions, not three separate reimplementations.
+
 ## Quickstart
 
 ```bash
