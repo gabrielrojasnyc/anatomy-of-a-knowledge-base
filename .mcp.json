@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "kb": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["kb-mcp"]
+    }
+  }
+}

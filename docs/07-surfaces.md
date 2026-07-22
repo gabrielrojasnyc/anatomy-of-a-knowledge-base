@@ -1,6 +1,6 @@
 # 07. Surfaces
 
-Three front doors, one library. `packages/cli`, `packages/mcp`, and `packages/web` each call the same `search`, `ask`, `askStream`, and `buildTools` exports from `@kb/core`; none of them re-implement retrieval or synthesis.
+Three front doors, one library. `packages/cli`, `packages/mcp`, and `packages/web` each call the same `search`, `getDocument`, `ask`, `askStream`, and `buildTools` exports from `@kb/core`; none of them re-implement retrieval or synthesis.
 
 ```mermaid
 flowchart TB
@@ -54,15 +54,19 @@ Maya Okafor          Maya Okafor (6 docs)
 Sam Whitfield        Sam Whitfield (4 docs)
 ```
 
+`kb get` dereferences any result url (or a bare id) into the complete artifact: `pnpm kb get jira://HEL-482` prints the whole thread, header to last comment, not the longest-plus-last excerpt that context expansion picks for search results.
+
 ## MCP: raw retrieval, no synthesis
 
-Add the server to Claude Code with one line:
+Claude Code discovers the server from the committed [`.mcp.json`](../.mcp.json) when it opens the repo; approve the prompt on first use. Any other MCP client adds it manually:
 
 ```
 claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp
 ```
 
-`createKbServer()` in [`packages/mcp/src/server.ts`](../packages/mcp/src/server.ts) registers exactly six tools, each returning JSON `EvidenceRow[]` as text content: `search`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`. Every tool is built by `buildTools(pool, { fixturesDir })` with no `llm` option, so `search` runs fusion but never reranks: the MCP client is the orchestrator, this server only serves evidence.
+`createKbServer()` in [`packages/mcp/src/server.ts`](../packages/mcp/src/server.ts) registers exactly seven tools, each returning JSON `EvidenceRow[]` as text content: `search`, `get_document`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`. Every tool is built by `buildTools(pool, { fixturesDir })` with no `llm` option, so `search` runs fusion but never reranks: the MCP client is the orchestrator, this server only serves evidence.
+
+Two contracts make the surface trustworthy for an agent. First, each input schema is generated from the parameters the tool's code actually reads (the `params` list in [`packages/core/src/answer/tools.ts`](../packages/core/src/answer/tools.ts)), so nothing is advertised and ignored: `list_projects` takes no arguments, only `search` takes `project`, and the `project` description is filled from the live projects table at connect time. Second, search and get are deliberately different primitives. Search is uncertain and ranked; `get_document` is a keyed lookup that turns any result's `url` (`jira://HEL-482`, `confluence://HELIOS/HEL-008`, `bucket://file.md`, `github://helios/src/path.ts`) into the full document, deterministically. An agent that re-searches to follow a citation is gambling on retrieval twice; an agent that calls `get_document` is not.
 
 A worked, real example: an agent asked about `HELIOS_PREFETCH_DEPTH` calls `search` first, gets JIRA and Confluence evidence back, notices the flag is defined in code, then calls `search_code` with the same query to ground the answer in the actual source. The real MCP response for `search_code({ query: "HELIOS_PREFETCH_DEPTH" })` includes:
 
@@ -72,7 +76,7 @@ src/cli/main.ts:18            if (flags.prefetchDepth) { process.env.HELIOS_PREF
 src/config/env.ts:16          /** HELIOS_PREFETCH_DEPTH controls how many shards the checkpoint loader
 ```
 
-The agent now has the ticket that names the fix, the runbook that documents it, and the three exact lines of code that define and consume the flag, chained from two narrow tool calls it chose itself.
+The agent now has the ticket that names the fix, the runbook that documents it, and the three exact lines of code that define and consume the flag, chained from two narrow tool calls it chose itself. If the ticket deserves a full read, `get_document({ uri: "jira://HEL-482" })` returns the entire thread in one call.
 
 ## Web UI: SSE stages
 
@@ -87,7 +91,7 @@ Every surface answers the question "what still works with no `CEREBRAS_API_KEY`"
 | CLI `kb search` | full pipeline through fusion, rerank skipped and labeled | fusion plus rerank |
 | CLI `kb ask` | refuses: "kb ask needs CEREBRAS_API_KEY (retrieval-only mode: use kb search)" | full planner, executor, synthesis |
 | CLI `kb who-knows` | always works, no LLM in this tool ever | unchanged |
-| MCP server | all six tools always LLM-free, by design | unchanged, MCP never calls Cerebras |
+| MCP server | all seven tools always LLM-free, by design | unchanged, MCP never calls Cerebras |
 | Web `/api/search` | fusion order, rerank skipped | reranked |
 | Web `/api/ask` | HTTP 503, "ask needs it" | streamed plan, evidence, answer |
 | Web `/api/projects` | always works | unchanged |
