@@ -12,7 +12,7 @@ const client = new Client({ name: "test-client", version: "1.0.0" });
 
 beforeAll(async () => {
   await ensureCorpus(pool);
-  const server = createKbServer(pool, join(ROOT, "fixtures"));
+  const server = await createKbServer(pool, join(ROOT, "fixtures"));
   const [ct, st] = InMemoryTransport.createLinkedPair();
   await Promise.all([client.connect(ct), server.connect(st)]);
 }, 600_000);
@@ -22,9 +22,10 @@ afterAll(async () => {
 });
 
 describe("kb mcp server", () => {
-  it("lists exactly the six tools", async () => {
+  it("lists exactly the seven tools", async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "get_document",
       "list_projects",
       "search",
       "search_code",
@@ -32,6 +33,47 @@ describe("kb mcp server", () => {
       "search_jira",
       "who_knows",
     ]);
+  });
+
+  it("list_projects accepts the natural zero-argument call", async () => {
+    const res = await client.callTool({
+      name: "list_projects",
+      arguments: {},
+    });
+    expect(res.isError).toBeFalsy();
+    const rows = JSON.parse((res.content as { text: string }[])[0].text) as {
+      sourceId: string;
+    }[];
+    expect(rows.map((r) => r.sourceId).sort()).toEqual([
+      "content",
+      "helios-eng",
+    ]);
+  });
+
+  it("advertises the live project names on search's project parameter", async () => {
+    const { tools } = await client.listTools();
+    const search = tools.find((t) => t.name === "search")!;
+    const project = (
+      search.inputSchema as {
+        properties: Record<string, { description?: string }>;
+      }
+    ).properties.project;
+    expect(project.description).toContain("helios-eng");
+    expect(project.description).toContain("content");
+  });
+
+  it("get_document dereferences a citation over the wire", async () => {
+    const res = await client.callTool({
+      name: "get_document",
+      arguments: { uri: "jira://HEL-482" },
+    });
+    expect(res.isError).toBeFalsy();
+    const rows = JSON.parse((res.content as { text: string }[])[0].text) as {
+      sourceId: string;
+      content: string;
+    }[];
+    expect(rows[0].sourceId).toBe("HEL-482");
+    expect(rows[0].content).toContain("manifest");
   });
 
   it("search_code returns evidence rows as JSON text", async () => {

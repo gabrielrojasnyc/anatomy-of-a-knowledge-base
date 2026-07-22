@@ -26,6 +26,8 @@ if (live && !llm) {
 
 const questions = loadGolden(join(ROOT, "eval/golden.json"));
 let passed = 0;
+let skipped = 0;
+const reciprocalRanks: number[] = [];
 const dbLabel = (() => {
   try {
     const u = new URL(cfg.databaseUrl);
@@ -42,11 +44,24 @@ for (const q of questions) {
     fixturesDir: join(ROOT, "fixtures"),
     llm,
   });
-  if (g.pass) passed++;
-  console.log(
-    `${g.pass ? "PASS" : "FAIL"}  ${q.id.padEnd(20)} ${g.details.join("; ")}`,
-  );
+  if (g.skipped) skipped++;
+  else if (g.pass) passed++;
+  reciprocalRanks.push(...(g.reciprocalRanks ?? []));
+  const label = g.skipped ? "SKIP" : g.pass ? "PASS" : "FAIL";
+  console.log(`${label}  ${q.id.padEnd(20)} ${g.details.join("; ")}`);
 }
-console.log(`\n${passed}/${questions.length} passed`);
+// MRR is the early-warning trend: a hit sliding from rank 2 to rank 9 moves
+// this number long before it falls off the top 10 and flips a PASS to FAIL.
+const gradable = questions.length - skipped;
+const mrr = reciprocalRanks.length
+  ? reciprocalRanks.reduce((a, b) => a + b, 0) / reciprocalRanks.length
+  : null;
+console.log(
+  `\n${passed}/${gradable} passed` +
+    (skipped ? `, ${skipped} skipped` : "") +
+    (mrr !== null
+      ? `, MRR ${mrr.toFixed(2)} over ${reciprocalRanks.length} expected hits`
+      : ""),
+);
 await pool.end();
-process.exit(passed >= questions.length - 2 ? 0 : 1);
+process.exit(passed >= gradable - 2 ? 0 : 1);

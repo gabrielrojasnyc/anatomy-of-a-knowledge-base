@@ -38,6 +38,14 @@
       "expect": [ { "source": "github", "sourceIdPrefix": "src/checkpoint/manifest.ts" } ] },
     { "id": "content-pricing", "project": "content",
       "question": "What does the launch draft say about pricing?",
-      "expect": [ { "source": "bucket", "sourceIdPrefix": "launch-pricing-draft.md" } ] }
+      "expect": [ { "source": "bucket", "sourceIdPrefix": "launch-pricing-draft.md" } ] },
+    { "id": "abstain-kubernetes", "project": "helios-eng",
+      "question": "Is Helios deployed on Kubernetes, and where is the operator configured?",
+      "note": "Nothing in the corpus mentions Kubernetes. Fusion will still fill ten rows (kNN always does); rerank must score every one of them irrelevant.",
+      "expectAbstain": true },
+    { "id": "abstain-windows", "project": "helios-eng",
+      "question": "Does Helios ship Windows builds?",
+      "note": "No fixture discusses Windows. The right behavior is a low score on everything, not a confident wrong citation.",
+      "expectAbstain": true }
   ]
 }

@@ -12,18 +12,28 @@ afterAll(async () => {
 });
 
 describe("golden questions, retrieval only, raw-text corpus", () => {
-  it("passes at least 8 of 10", { timeout: 300_000 }, async () => {
-    const questions = loadGolden(join(ROOT, "eval/golden.json"));
-    expect(questions).toHaveLength(10);
-    const grades = [];
-    for (const q of questions)
-      grades.push(
-        await gradeQuestion(pool, q, { fixturesDir: join(ROOT, "fixtures") }),
-      );
-    const failed = grades.filter((g) => !g.pass);
-    expect(
-      failed.length,
-      `failed: ${failed.map((g) => `${g.id} (${g.details.join("; ")})`).join(" | ")}`,
-    ).toBeLessThanOrEqual(2);
-  });
+  it(
+    "passes all but two gradable questions",
+    { timeout: 300_000 },
+    async () => {
+      const questions = loadGolden(join(ROOT, "eval/golden.json"));
+      expect(questions).toHaveLength(12);
+      const grades = [];
+      for (const q of questions)
+        grades.push(
+          await gradeQuestion(pool, q, { fixturesDir: join(ROOT, "fixtures") }),
+        );
+      // Abstention questions need rerank, so a retrieval-only run skips them.
+      const skipped = grades.filter((g) => g.skipped);
+      expect(skipped.map((g) => g.id).sort()).toEqual([
+        "abstain-kubernetes",
+        "abstain-windows",
+      ]);
+      const failed = grades.filter((g) => !g.skipped && !g.pass);
+      expect(
+        failed.length,
+        `failed: ${failed.map((g) => `${g.id} (${g.details.join("; ")})`).join(" | ")}`,
+      ).toBeLessThanOrEqual(2);
+    },
+  );
 });

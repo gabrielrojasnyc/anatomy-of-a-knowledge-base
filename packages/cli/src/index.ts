@@ -5,6 +5,7 @@ import {
   ask,
   buildTools,
   chat,
+  getDocument,
   getPool,
   loadConfig,
   migrate,
@@ -188,6 +189,25 @@ program
       }
     },
   );
+
+program
+  .command("get <uri>")
+  .description("Fetch the full document behind a result url or bare id")
+  .action(async (uri: string) => {
+    const pool = getPool();
+    try {
+      const doc = await getDocument(pool, uri, { fixturesDir: FIXTURES });
+      console.log(pc.cyan(doc.title ?? doc.sourceId) + pc.dim(` (${doc.url})`));
+      if (doc.authors?.length)
+        console.log(pc.dim(`authors: ${doc.authors.join(", ")}`));
+      console.log(`\n${doc.content}`);
+    } catch (e) {
+      console.error(pc.red((e as Error).message));
+      process.exitCode = 1;
+    } finally {
+      await pool.end();
+    }
+  });
 
 program
   .command("ask <question>")
