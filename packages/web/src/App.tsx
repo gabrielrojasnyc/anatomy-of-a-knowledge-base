@@ -421,14 +421,7 @@ export default function App() {
         </div>
 
         <footer className="mt-16 border-t border-zinc-200 pt-6 text-sm text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-          <a
-            href="docs/00-overview.md"
-            className="hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            docs/00-overview.md
-          </a>
+          docs/00-overview.md in the repo
         </footer>
       </div>
     </div>

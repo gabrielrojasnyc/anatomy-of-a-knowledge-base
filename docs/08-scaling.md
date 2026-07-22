@@ -38,6 +38,7 @@ flowchart LR
 | HNSW built with pgvector defaults (`m=16`, `ef_construction=64`) | tuned `m`, `ef_construction`, and query-time `ef_search` against measured recall and latency targets | defaults are a reasonable starting point at any size, but they trade recall, build time, and memory in ways that only show up under real data volume and real query load |
 | `sources.last_synced` is written after every ingest, never read | real connector APIs that request deltas since the watermark | every ingest here re-discovers and re-distills the entire fixture set, short-circuited only by a per-row content hash; a real API integration at scale cannot afford to re-list millions of objects on every run |
 | Evidence content interpolated into the synthesis prompt unescaped | escaping or structurally fencing evidence before it reaches the model | covered in full in `docs/06-answer.md`; safe only because every fixture is trusted, first-party content |
+| `/api/ask` does not cancel in-flight LLM calls when the client disconnects | `AbortSignal` propagated end to end, from the client's disconnect through the request handler into every LLM call | a demo-scale abandoned request wastes one call; at real traffic, abandoned requests that keep running burn LLM spend and hold connections for no reader |
 
 ## The three chunker quirks
 
