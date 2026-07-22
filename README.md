@@ -1,0 +1,110 @@
+# Anatomy of a Knowledge Base
+
+An open-source, runnable teaching implementation of the architecture in Cerebras's ["How We Built Our Knowledge Base"](https://www.cerebras.ai/blog/how-we-built-our-knowledge-base). **Not affiliated with Cerebras; inspired by their write-up.** Everything here is real and runnable against a fictional company, Helios: real Postgres, real pgvector, real local embeddings, real Cerebras calls if you bring a key, and a fixture corpus (Confluence, JIRA, GitHub, a bucket of docs) sized to actually demonstrate cross-source retrieval instead of just describing it.
+
+```mermaid
+flowchart TD
+  subgraph Sources
+    CONF[Confluence fixtures]
+    JIRA[JIRA fixtures]
+    GH[GitHub fixtures]
+    BUCKET[Bucket fixtures]
+  end
+  CONF --> DIST[Distillation: LLM extractors]
+  JIRA --> DIST
+  BUCKET --> DIST
+  GH --> CHUNK[Chunking: no LLM, syntax boundaries]
+  DIST --> EMB[(embeddings table: pgvector + tsvector)]
+  CHUNK --> EMB
+  EMB --> RET[Five retrievers in parallel]
+  RET --> FUSE[RRF fusion, dedupe, per-parent cap]
+  FUSE --> RERANK[LLM rerank, 0 to 10]
+  RERANK --> EXPAND[Context expansion, post-rank]
+  EXPAND --> SYN[Planner, executor, synthesis]
+  SYN --> SURF[CLI, MCP server, web UI]
+```
+
+## Quickstart
+
+```bash
+podman compose up -d      # or docker compose up -d, starts Postgres and pgvector
+pnpm install
+cp .env.example .env      # add a Cerebras key (free tier: cloud.cerebras.ai), or skip for retrieval-only
+pnpm kb init
+pnpm kb ingest            # 5 to 45 min with a key, tier-dependent; ~3 min raw-text mode without one
+pnpm kb search "why does checkpoint restore stall?" --project helios-eng --explain
+```
+
+That last command returns real ranked evidence in seconds, with or without a key. With one, `--explain` also shows LLM rerank scores.
+
+## Three surfaces, one library
+
+**CLI** (`packages/cli`): `kb search --explain`, `kb ask --trace`, `kb who-knows`. Real, trimmed:
+
+```
+1. HEL-482: Checkpoint restore stalls after manifest load on 128-shard clusters (jira://HEL-482)
+2. HEL-482 comment by Priya Natarajan (jira://HEL-482)
+3. Runbook: NFS Mount Troubleshooting / Symptoms of a bad mount (confluence://HELIOS/HEL-008)
+```
+
+**MCP server**: `claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp` adds six LLM-free tools (`search`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`) that any MCP client can orchestrate itself. Real `search_code({ query: "HELIOS_PREFETCH_DEPTH" })` result:
+
+```
+src/checkpoint/loader.ts:19   /** Warm the shard cache ahead of restore. Prefetch depth is read from
+src/config/env.ts:16          /** HELIOS_PREFETCH_DEPTH controls how many shards the checkpoint loader
+```
+
+**Web UI**: `pnpm web`, then open `localhost:8787`. One page, SSE-streamed. Real event from `/api/ask`:
+
+```
+event: answer
+data: {"stage":"answer","text":"Checkpoints are retained for 14 days, as a decision in May 2026
+reduced the retention from the previously documented 30 days [4][5][6]..."}
+```
+
+Full tour, with a worked MCP transcript and the SSE-to-UI mapping: [`docs/07-surfaces.md`](docs/07-surfaces.md).
+
+## Eval
+
+`pnpm eval` grades ten golden questions against retrieval alone (no LLM); `pnpm eval --live` adds Cerebras rerank. Real scorecards from this store:
+
+```
+golden eval, retrieval only: 8/10 passed
+golden eval, live rerank:    9/10 passed
+```
+
+The one live miss is honest, not a bug: for "why does checkpoint restore stall," rerank consistently favors the JIRA ticket and Confluence runbook that answer the question in words over the code chunk that's the actual fix, because a reranker judging relevance to a definitional question is supposed to do exactly that. See [`docs/05-fusion-rerank.md`](docs/05-fusion-rerank.md) for the mechanism.
+
+## Models
+
+| Stage | Model | Env override | Why |
+|---|---|---|---|
+| Distillation | `gpt-oss-120b` | `KB_MODEL_DISTILL` | strongest structured extraction, runs once per document |
+| Planner | `gemma-4-31b` | `KB_MODEL_PLANNER` | tool selection is a cheap classification pass |
+| Rerank | `gemma-4-31b` | `KB_MODEL_RERANK` | fastest model fits a batched 0-to-10 scoring call |
+| Synthesis | `zai-glm-4.7` | `KB_MODEL_SYNTHESIS` | the user-facing cited answer deserves the strongest writer |
+
+Embeddings are local and free: `Xenova/bge-small-en-v1.5` via `@huggingface/transformers`, 384 dimensions, no key required for ingestion or retrieval-only search.
+
+## Docs
+
+| Page | What it teaches |
+|---|---|
+| [00-overview](docs/00-overview.md) | the vertical stack and reading order |
+| [01-schema](docs/01-schema.md) | one table, why it wins, the metadata field inventory |
+| [02-ingestion](docs/02-ingestion.md) | the connector contract, idempotency, three layers of fault isolation |
+| [03-distillation](docs/03-distillation.md) | embed the artifact not the transcript, a real thread walked end to end |
+| [04-retrieval](docs/04-retrieval.md) | five retrievers, two measured surprises about IDF and full-text |
+| [05-fusion-rerank](docs/05-fusion-rerank.md) | RRF with real fixture numbers, rerank's honest miss |
+| [06-answer](docs/06-answer.md) | planner, executor, synthesis, and a real trust-boundary callout |
+| [07-surfaces](docs/07-surfaces.md) | CLI, MCP, web UI, and what degrades without a key |
+| [08-scaling](docs/08-scaling.md) | every demo simplification, named, next to its production fix |
+| [09-write-your-own-connector](docs/09-write-your-own-connector.md) | a fifth source, in about 80 lines |
+
+## What this is not
+
+No authentication, no authorization, no audit trail. No live connectors: every source is a fixture reader over static files, not a Confluence, JIRA, GitHub, or S3 API integration. No tombstones, no partitioning, no read replicas. This is a teaching implementation of the collection and query pillars, deliberately, with every simplification named instead of hidden: see [`docs/08-scaling.md`](docs/08-scaling.md) for the full list and what each one costs at real scale.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
