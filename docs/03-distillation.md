@@ -28,7 +28,7 @@ The fixture [`fixtures/jira/HEL-482.json`](../fixtures/jira/HEL-482.json) is an 
 }
 ```
 
-`jira.ts` joins `[issue.summary, question, summary, resolution, ...systems, ...code_refs]` into one `content` string and embeds it as a single `issue_thread` row. That row is what every retriever sees: dense, on-topic, and carrying the exact flag name and file path a search for this incident needs, none of which required a human to write a runbook.
+`jira.ts` joins `[issue.summary, question, summary, resolution, ...systems, ...code_refs]` into one `content` string and embeds it as a single `issue_thread` row. That row is what every retriever sees: dense, on-topic, and carrying the exact flag name and file path a search for this incident needs, none of which required a human to write a runbook. The `code_refs` do double duty: at retrieval time, every ref that names a real file surfaces as a `links` entry on the evidence row, so the pointer the model extracted becomes a hop an agent can follow with `get_document` (the pattern [11-agent-playbook](11-agent-playbook.md) builds on).
 
 ## What bursting keeps
 

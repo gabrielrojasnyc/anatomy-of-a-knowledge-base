@@ -58,7 +58,7 @@ The tradeoff is that connectors know nothing about each other and don't need to.
 | `path` | github | `retrieval/expand.ts` reads the source file back for code context expansion |
 | `distilled` | all four | `ingest/run.ts` counts degraded rows at ingest time only, never read at query time |
 | `boundary`, `labels`, `sectionIndex`, `sectionCount` | github / confluence / bucket | nothing today; recorded for a future filter or debug view that doesn't exist yet |
-| `status`, `type`, `components`, `systems`, `code_refs` | jira | nothing structured; the same facts already got folded into `content` during distillation, so they still influence ranking, just as text rather than as a queryable field |
+| `status`, `type`, `components`, `systems`, `code_refs` | jira | the facts are folded into `content` during distillation so they influence ranking as text; `code_refs` additionally becomes the `links` field on evidence rows, each path existence-checked at retrieval time so an agent can hop straight to the file with `get_document` |
 
 Section neighbor expansion is the clearest case of a field that looks load-bearing and isn't: `sectionIndex` and `sectionCount` are written on every Confluence and bucket section, but `retrieval/expand.ts`'s `neighborSections` reconstructs the index by splitting `source_id` on `#` instead of reading the metadata field that already has it. Both would work; only one is wired up. That kind of drift is normal in a JSONB column with no schema enforcement, and it's a reason to think twice before treating an unindexed metadata field as a contract.
 

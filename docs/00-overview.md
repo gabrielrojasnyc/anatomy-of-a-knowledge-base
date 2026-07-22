@@ -49,6 +49,6 @@ There is no Slack connector; JIRA's comment threads carry that lesson instead. A
 
 ## Reading order
 
-The docs are numbered in pipeline order, and reading order is file order: `00-overview` (this page) sets the map, `01-schema` through `04-retrieval` cover collection and search, `05-fusion-rerank` through `07-surfaces` cover ranking and the answer layer, and `08-scaling` plus `09-write-your-own-connector` close with what changes at production scale. Each page links directly to the source files it explains; nothing here is described without a path you can open.
+The docs are numbered in pipeline order, and reading order is file order: `00-overview` (this page) sets the map, `01-schema` through `04-retrieval` cover collection and search, `05-fusion-rerank` through `07-surfaces` cover ranking and the answer layer, `08-scaling` plus `09-write-your-own-connector` cover what changes at production scale, and `10-first-two-hours` plus `11-agent-playbook` close with the two onboarding paths: one for a human running it, one for an AI agent driving it. Each page links directly to the source files it explains; nothing here is described without a path you can open.
 
 Start with the schema (`docs/01-schema.md`) if you think in data models, or `docs/02-ingestion.md` if you think in pipelines. Both eventually meet at the same table.
