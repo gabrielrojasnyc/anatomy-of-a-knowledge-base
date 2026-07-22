@@ -20,5 +20,6 @@
     "tsx": "^4.19.0",
     "pg": "^8.13.0",
     "@types/pg": "^8.11.0"
-  }
+  },
+  "repository": "github:gabrielrojasnyc/anatomy-of-a-knowledge-base"
 }

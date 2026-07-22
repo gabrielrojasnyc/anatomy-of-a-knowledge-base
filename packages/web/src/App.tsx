@@ -421,7 +421,12 @@ export default function App() {
         </div>
 
         <footer className="mt-16 border-t border-zinc-200 pt-6 text-sm text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-          docs/00-overview.md in the repo
+          <a
+            className="hover:text-zinc-600 dark:hover:text-zinc-300"
+            href="https://github.com/gabrielrojasnyc/anatomy-of-a-knowledge-base/blob/main/docs/00-overview.md"
+          >
+            docs/00-overview.md
+          </a>
         </footer>
       </div>
     </div>
