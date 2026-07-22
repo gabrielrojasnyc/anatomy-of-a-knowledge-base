@@ -72,10 +72,10 @@ Full tour, with a worked MCP transcript and the SSE-to-UI mapping: [`docs/07-sur
 
 ```
 golden eval, retrieval only: 8/10 passed
-golden eval, live rerank:    9/10 passed
+golden eval, live rerank:    10/10 passed
 ```
 
-The one live miss is honest, not a bug: for "why does checkpoint restore stall," rerank consistently favors the JIRA ticket and Confluence runbook that answer the question in words over the code chunk that's the actual fix, because a reranker judging relevance to a definitional question is supposed to do exactly that. See [`docs/05-fusion-rerank.md`](docs/05-fusion-rerank.md) for the mechanism.
+Retrieval-only misses `restore-stall` (the code chunk lands just outside the fused top 10) and `paraphrase-serving` (no shared vocabulary with the fixture); live rerank recovered both on this run. Rerank is an LLM call and the corpus comes from LLM distillation, so neither number is fixed: re-ingesting the same fixtures reorders results, and this scorecard has moved between 8 and 10 of 10 across runs, which is exactly why the eval exists instead of a one-off spot check. See [`docs/05-fusion-rerank.md`](docs/05-fusion-rerank.md) for a reproducible worked example of rerank demoting a code chunk on this same question.
 
 ## Models
 
