@@ -1,0 +1,95 @@
+# 07. Surfaces
+
+Three front doors, one library. `packages/cli`, `packages/mcp`, and `packages/web` each call the same `search`, `ask`, `askStream`, and `buildTools` exports from `@kb/core`; none of them re-implement retrieval or synthesis.
+
+```mermaid
+flowchart TB
+  CORE["@kb/core: search, ask, askStream, buildTools"]
+  CLI["packages/cli: kb command"]
+  MCP["packages/mcp: stdio MCP server"]
+  WEB["packages/web: Hono API + Vite/React UI"]
+  CORE --> CLI --> T[terminal]
+  CORE --> MCP --> A[Claude Code or any MCP client]
+  CORE --> WEB --> B[browser]
+```
+
+## CLI tour
+
+`kb search --explain` prints every retriever's top results, the RRF contribution table, and rerank scores. Trimmed, real output for `pnpm kb search "why does checkpoint restore stall?" --project helios-eng --explain`:
+
+```
+[fts]
+  1. HEL-001#0                                0.8383
+  2. HEL-482                                  0.8274
+
+[rerank] applied
+  HEL-482                                  10/10
+  HEL-482#b2                               10/10
+  HEL-008#1                                7/10
+
+results
+1. HEL-482: Checkpoint restore stalls after manifest load on 128-shard clusters (jira://HEL-482)
+2. HEL-482 comment by Priya Natarajan (jira://HEL-482)
+3. Runbook: NFS Mount Troubleshooting / Symptoms of a bad mount (confluence://HELIOS/HEL-008)
+```
+
+`kb ask --trace` prints the planner's choice, the evidence table, then the streamed cited answer. Real output for `pnpm kb ask "How long do we retain checkpoints?" --project helios-eng --trace`:
+
+```
+[planner] Retention policies are typically documented in policy pages or runbooks, and a general search is best for cross-system policy discovery.
+  search("checkpoint retention policy")
+
+answer
+We retain checkpoints for 14 days. While documentation previously specified a 30-day
+retention period [1][2], a newer decision cut the retention to 14 days effective
+immediately to reduce storage costs [4][5]. This policy is active in the sweep job
+and supersedes the older wiki page [4][5].
+```
+
+`kb who-knows` needs no LLM at all. Real output for `pnpm kb who-knows "shard cache"`:
+
+```
+Priya Natarajan      Priya Natarajan (17 docs)
+Maya Okafor          Maya Okafor (6 docs)
+Sam Whitfield        Sam Whitfield (4 docs)
+```
+
+## MCP: raw retrieval, no synthesis
+
+Add the server to Claude Code with one line:
+
+```
+claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp
+```
+
+`createKbServer()` in [`packages/mcp/src/server.ts`](../packages/mcp/src/server.ts) registers exactly six tools, each returning JSON `EvidenceRow[]` as text content: `search`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`. Every tool is built by `buildTools(pool, { fixturesDir })` with no `llm` option, so `search` runs fusion but never reranks: the MCP client is the orchestrator, this server only serves evidence.
+
+A worked, real example: an agent asked about `HELIOS_PREFETCH_DEPTH` calls `search` first, gets JIRA and Confluence evidence back, notices the flag is defined in code, then calls `search_code` with the same query to ground the answer in the actual source. The real MCP response for `search_code({ query: "HELIOS_PREFETCH_DEPTH" })` includes:
+
+```
+src/checkpoint/loader.ts:19   /** Warm the shard cache ahead of restore. Prefetch depth is read from
+src/cli/main.ts:18            if (flags.prefetchDepth) { process.env.HELIOS_PREFETCH_DEPTH = String(...
+src/config/env.ts:16          /** HELIOS_PREFETCH_DEPTH controls how many shards the checkpoint loader
+```
+
+The agent now has the ticket that names the fix, the runbook that documents it, and the three exact lines of code that define and consume the flag, chained from two narrow tool calls it chose itself.
+
+## Web UI: SSE stages
+
+`/api/ask` streams `askStream`'s emitted stages directly over server-sent events: `plan`, one `evidence` event per tool as each settles, `answer`, then `done` (or `error`). `packages/web/src/App.tsx` listens for each event name and appends a stage card: `PlanCard` for the tool selection and reasoning, `EvidenceCard` per tool with expandable rows, `AnswerCard` with clickable `[n]` citations that scroll to and flash the matching evidence row. The UI never buffers the whole answer before showing anything; the same event stream that drives the terminal's `--trace` output drives the browser.
+
+## Degradation without a key
+
+Every surface answers the question "what still works with no `CEREBRAS_API_KEY`" differently, and each answer is deliberate:
+
+| Surface | No key | With key |
+|---|---|---|
+| CLI `kb search` | full pipeline through fusion, rerank skipped and labeled | fusion plus rerank |
+| CLI `kb ask` | refuses: "kb ask needs CEREBRAS_API_KEY (retrieval-only mode: use kb search)" | full planner, executor, synthesis |
+| CLI `kb who-knows` | always works, no LLM in this tool ever | unchanged |
+| MCP server | all six tools always LLM-free, by design | unchanged, MCP never calls Cerebras |
+| Web `/api/search` | fusion order, rerank skipped | reranked |
+| Web `/api/ask` | HTTP 503, "ask needs it" | streamed plan, evidence, answer |
+| Web `/api/projects` | always works | unchanged |
+
+`who_knows` and `list_projects` never touch an LLM regardless of surface, because ranking people by authorship weight and listing a config table are not synthesis problems.
