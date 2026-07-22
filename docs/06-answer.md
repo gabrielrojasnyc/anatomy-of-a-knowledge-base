@@ -34,7 +34,7 @@ All three are caught by the same try/catch and the same explicit empty-list chec
 
 ## Evidence numbering and dedupe
 
-Tools run in parallel via `Promise.all`, and each tool's rows are emitted to the stream the moment that tool settles, in whatever order tools finish, not the order they were planned. Once every tool has settled, the combined evidence is deduped by `source:sourceId`, keeping the first occurrence, and capped at 20 rows. Deliberately, the dedupe runs after the per-tool stream events, not before: the web UI shows every tool's raw results including overlaps (useful for seeing that `search` and `search_confluence` agreed), while the synthesis prompt gets one clean, numbered list with no duplicate citations. Numbering happens last, as `<evidence n="1" source="..." url="...">`, so citation numbers in the answer always line up with the deduped list, not the raw per-tool lists.
+Tools run in parallel via `Promise.all`; each tool's rows stream to the UI the moment that tool settles, not in planned order. Once every tool has settled, the combined evidence is deduped by `source:sourceId`, keeping the first occurrence, and capped at 20 rows. The dedupe runs after the per-tool stream events, not before: the UI shows every tool's raw results including overlaps, useful for seeing that `search` and `search_confluence` agreed, while synthesis gets one clean, numbered list with no duplicate citations. Numbering happens last, as `<evidence n="1" source="..." url="...">`, so citation numbers always line up with the deduped list, not the raw per-tool lists.
 
 ## The conflict caveat, for real
 
