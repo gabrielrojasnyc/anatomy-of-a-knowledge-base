@@ -49,7 +49,7 @@ That last command returns real ranked evidence in seconds, with or without a key
 3. Runbook: NFS Mount Troubleshooting / Symptoms of a bad mount (confluence://HELIOS/HEL-008)
 ```
 
-**MCP server**: Claude Code discovers it from the committed [`.mcp.json`](.mcp.json) the moment it opens the repo; any other MCP client adds it with `claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp` or its equivalent. Seven LLM-free tools (`search`, `get_document`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`) that any MCP client orchestrates itself, with input schemas generated from the parameters each tool actually reads. `search` returns ranked guesses; `get_document` dereferences any result's `url` into the full artifact, the whole JIRA thread, every section of a page, an entire source file. Real `search_code({ query: "HELIOS_PREFETCH_DEPTH" })` result:
+**MCP server**: Claude Code discovers it from the committed [`.mcp.json`](.mcp.json) the moment it opens the repo; any other MCP client adds it with `claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp` or its equivalent. Eight LLM-free tools (`search`, `get_document`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`, `status`) that any MCP client orchestrates itself, with input schemas generated from the parameters each tool actually reads. `search` returns ranked guesses; `get_document` dereferences any result's `url` into the full artifact, the whole JIRA thread, every section of a page, an entire source file. JIRA rows also carry `links`: file paths distillation extracted from the thread, existence-checked, ready to hand back to `get_document` for a code-grounded hop. The full operating pattern an agent should run is [`docs/11-agent-playbook.md`](docs/11-agent-playbook.md). Real `search_code({ query: "HELIOS_PREFETCH_DEPTH" })` result:
 
 ```
 src/checkpoint/loader.ts:19   /** Warm the shard cache ahead of restore. Prefetch depth is read from
@@ -68,11 +68,11 @@ Full tour, with a worked MCP transcript and the SSE-to-UI mapping: [`docs/07-sur
 
 ## Eval
 
-`pnpm eval` grades twelve golden questions against retrieval alone (no LLM); `pnpm eval --live` adds Cerebras rerank. Two of the twelve are questions the corpus deliberately cannot answer: raw fusion always fills its row budget, so only a scoring layer can say "nothing relevant here", and the abstention questions hold rerank to exactly that. Real scorecards from this store:
+`pnpm eval` grades fourteen golden questions against retrieval alone (no LLM); `pnpm eval --live` adds Cerebras rerank. Two are questions the corpus deliberately cannot answer: raw fusion always fills its row budget, so only a scoring layer can say "nothing relevant here", and the abstention questions hold rerank to exactly that. Two more are hop trajectories graded on terminal evidence: search must surface the incident ticket, the ticket's distilled `links` must dereference through `get_document`, and the landing file must contain the flag or error the question is really about. Real scorecards from this store:
 
 ```
-golden eval, retrieval only: 8/10 passed, 2 skipped, MRR 0.48
-golden eval, live rerank:    12/12 passed, MRR 0.69
+golden eval, retrieval only: 10/12 passed, 2 skipped, MRR 0.48
+golden eval, live rerank:    14/14 passed, MRR 0.69
 ```
 
 Retrieval-only misses `restore-stall` (the code chunk lands just outside the fused top 10) and `paraphrase-serving` (no shared vocabulary with the fixture), and skips the abstention pair it cannot grade; live rerank recovered both misses on this run and scored every row of both unanswerable questions at or below 3 of 10. The MRR number is the early-warning trend: an expected hit sliding from rank 2 to rank 9 moves it long before a miss flips a PASS to FAIL. Rerank is an LLM call and the corpus comes from LLM distillation, so neither number is fixed: re-ingesting the same fixtures reorders results, and this scorecard has moved between 8 and 10 of 10 across runs, which is exactly why the eval exists instead of a one-off spot check. See [`docs/05-fusion-rerank.md`](docs/05-fusion-rerank.md) for a reproducible worked example of rerank demoting a code chunk on this same question.
@@ -103,6 +103,7 @@ Embeddings are local and free: `Xenova/bge-small-en-v1.5` via `@huggingface/tran
 | [08-scaling](docs/08-scaling.md) | every demo simplification, named, next to its production fix |
 | [09-write-your-own-connector](docs/09-write-your-own-connector.md) | a fifth source, in under 60 lines |
 | [10-first-two-hours](docs/10-first-two-hours.md) | the onboarding path: run it, read one search, then design |
+| [11-agent-playbook](docs/11-agent-playbook.md) | the operating pattern for AI agents: signals, hops, abstention |
 
 ## What this is not
 

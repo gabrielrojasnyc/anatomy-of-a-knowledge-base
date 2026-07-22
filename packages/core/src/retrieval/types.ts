@@ -27,6 +27,8 @@ export interface EvidenceRow {
   /** How many retrievers independently surfaced this row. */
   retrieverAgreement?: number;
   authors?: string[];
+  /** Hop targets distillation extracted: uris get_document can dereference. */
+  links?: string[];
   recency: string | null;
   tool: string;
 }

@@ -6,6 +6,7 @@ import { rareTokenRetriever, recencyRetriever } from "./signals.js";
 import { fuse, type FusedDoc } from "./rrf.js";
 import { rerank } from "./rerank.js";
 import { expandDoc } from "./expand.js";
+import { codeLinks } from "./links.js";
 import type { EvidenceRow, RankedList } from "./types.js";
 
 export interface SearchTrace {
@@ -111,6 +112,7 @@ export async function search(
     const authors = ((f.doc.metadata.authors as string[]) ?? []).filter(
       (a) => a !== "unknown",
     );
+    const links = codeLinks(f.doc.metadata, opts.fixturesDir);
     evidence.push({
       content,
       source: f.doc.source,
@@ -124,6 +126,7 @@ export async function search(
       scoreKind: applied ? "reranked" : "fused",
       retrieverAgreement: f.contributions.length,
       ...(authors.length ? { authors } : {}),
+      ...(links.length ? { links } : {}),
       recency: f.doc.authoredAt
         ? f.doc.authoredAt.toISOString().slice(0, 10)
         : null,

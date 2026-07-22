@@ -56,6 +56,8 @@ Sam Whitfield        Sam Whitfield (4 docs)
 
 `kb get` dereferences any result url (or a bare id) into the complete artifact: `pnpm kb get jira://HEL-482` prints the whole thread, header to last comment, not the longest-plus-last excerpt that context expansion picks for search results.
 
+`search`, `get`, and `ask` all take `--json` for machine callers: the same evidence, trace, and plan objects the web API serves, printed to stdout with warnings routed to stderr. An agent shelling out to the CLI parses structure instead of scraping formatting.
+
 ## MCP: raw retrieval, no synthesis
 
 Claude Code discovers the server from the committed [`.mcp.json`](../.mcp.json) when it opens the repo; approve the prompt on first use. Any other MCP client adds it manually:
@@ -64,7 +66,7 @@ Claude Code discovers the server from the committed [`.mcp.json`](../.mcp.json) 
 claude mcp add kb -- pnpm --dir /path/to/repo kb-mcp
 ```
 
-`createKbServer()` in [`packages/mcp/src/server.ts`](../packages/mcp/src/server.ts) registers exactly seven tools, each returning JSON `EvidenceRow[]` as text content: `search`, `get_document`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`. Every tool is built by `buildTools(pool, { fixturesDir })` with no `llm` option, so `search` runs fusion but never reranks: the MCP client is the orchestrator, this server only serves evidence.
+`createKbServer()` in [`packages/mcp/src/server.ts`](../packages/mcp/src/server.ts) registers exactly eight tools, each returning JSON `EvidenceRow[]` as text content: `search`, `get_document`, `search_confluence`, `search_jira`, `search_code`, `who_knows`, `list_projects`, `status`. Every tool is built by `buildTools(pool, { fixturesDir })` with no `llm` option, so `search` runs fusion but never reranks: the MCP client is the orchestrator, this server only serves evidence. `status` closes the loop that orchestration needs: per-source counts and distilled fractions, so an agent can tell "not ingested yet" from "no relevant evidence" without a human checking the database. Ranked rows also surface `links`, the file paths distillation extracted from a thread, existence-checked so each one is safe to hand straight back to `get_document`.
 
 Two contracts make the surface trustworthy for an agent. First, each input schema is generated from the parameters the tool's code actually reads (the `params` list in [`packages/core/src/answer/tools.ts`](../packages/core/src/answer/tools.ts)), so nothing is advertised and ignored: `list_projects` takes no arguments, only `search` takes `project`, and the `project` description is filled from the live projects table at connect time. Second, search and get are deliberately different primitives. Search is uncertain and ranked; `get_document` is a keyed lookup that turns any result's `url` (`jira://HEL-482`, `confluence://HELIOS/HEL-008`, `bucket://file.md`, `github://helios/src/path.ts`) into the full document, deterministically. An agent that re-searches to follow a citation is gambling on retrieval twice; an agent that calls `get_document` is not.
 
@@ -91,7 +93,7 @@ Every surface answers the question "what still works with no `CEREBRAS_API_KEY`"
 | CLI `kb search` | full pipeline through fusion, rerank skipped and labeled | fusion plus rerank |
 | CLI `kb ask` | refuses: "kb ask needs CEREBRAS_API_KEY (retrieval-only mode: use kb search)" | full planner, executor, synthesis |
 | CLI `kb who-knows` | always works, no LLM in this tool ever | unchanged |
-| MCP server | all seven tools always LLM-free, by design | unchanged, MCP never calls Cerebras |
+| MCP server | all eight tools always LLM-free, by design | unchanged, MCP never calls Cerebras |
 | Web `/api/search` | fusion order, rerank skipped | reranked |
 | Web `/api/ask` | HTTP 503, "ask needs it" | streamed plan, evidence, answer |
 | Web `/api/projects` | always works | unchanged |

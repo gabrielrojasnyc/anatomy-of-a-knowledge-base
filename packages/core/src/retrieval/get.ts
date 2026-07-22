@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type pg from "pg";
+import { codeLinks } from "./links.js";
 import type { EvidenceRow } from "./types.js";
 
 /**
@@ -28,7 +29,11 @@ function row(partial: Omit<EvidenceRow, "score" | "tool">): EvidenceRow {
   return { ...partial, score: 1, tool: "get_document" };
 }
 
-async function jiraDocument(pool: pg.Pool, key: string): Promise<EvidenceRow> {
+async function jiraDocument(
+  pool: pg.Pool,
+  key: string,
+  opts: { fixturesDir?: string },
+): Promise<EvidenceRow> {
   const { rows } = await pool.query(
     `SELECT raw, metadata, authored_at FROM embeddings
       WHERE source = 'jira' AND source_id = $1`,
@@ -37,6 +42,10 @@ async function jiraDocument(pool: pg.Pool, key: string): Promise<EvidenceRow> {
   if (rows.length === 0)
     throw new Error(`no jira document "${key}" in the store`);
   const issue = rows[0].raw as Issue;
+  const links = codeLinks(
+    (rows[0].metadata as Record<string, unknown>) ?? {},
+    opts.fixturesDir,
+  );
   const header = [
     `${issue.key}: ${issue.summary}`,
     `status: ${issue.status}  type: ${issue.type}  reporter: ${issue.reporter}` +
@@ -58,6 +67,7 @@ async function jiraDocument(pool: pg.Pool, key: string): Promise<EvidenceRow> {
     authors: [
       ...new Set([issue.reporter, ...issue.comments.map((c) => c.author)]),
     ],
+    ...(links.length ? { links } : {}),
     recency: rows[0].authored_at
       ? new Date(rows[0].authored_at as string).toISOString().slice(0, 10)
       : null,
@@ -154,7 +164,7 @@ function dispatch(
   id: string,
   opts: { fixturesDir?: string },
 ): Promise<EvidenceRow> {
-  if (source === "jira") return jiraDocument(pool, id);
+  if (source === "jira") return jiraDocument(pool, id, opts);
   if (source === "confluence" || source === "bucket")
     return sectionedDocument(pool, source, id);
   if (source === "github") {

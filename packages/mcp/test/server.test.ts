@@ -22,7 +22,7 @@ afterAll(async () => {
 });
 
 describe("kb mcp server", () => {
-  it("lists exactly the seven tools", async () => {
+  it("lists exactly the eight tools", async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
       "get_document",
@@ -31,8 +31,18 @@ describe("kb mcp server", () => {
       "search_code",
       "search_confluence",
       "search_jira",
+      "status",
       "who_knows",
     ]);
+  });
+
+  it("status answers the readiness question over the wire", async () => {
+    const res = await client.callTool({ name: "status", arguments: {} });
+    expect(res.isError).toBeFalsy();
+    const rows = JSON.parse((res.content as { text: string }[])[0].text) as {
+      title: string;
+    }[];
+    expect(rows.map((r) => r.title)).toContain("jira");
   });
 
   it("list_projects accepts the natural zero-argument call", async () => {

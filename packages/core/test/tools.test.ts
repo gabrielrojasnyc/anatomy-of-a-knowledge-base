@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { join } from "node:path";
 import { getPool } from "../src/schema/db.js";
 import { buildTools } from "../src/answer/tools.js";
+import { codeLinks } from "../src/retrieval/links.js";
 import { ensureCorpus } from "./helpers.js";
 
 const ROOT = join(import.meta.dirname, "../../..");
@@ -14,7 +15,7 @@ afterAll(async () => {
 });
 
 describe("buildTools", () => {
-  it("exposes exactly the seven tools", () => {
+  it("exposes exactly the eight tools", () => {
     expect(tools.map((t) => t.name).sort()).toEqual([
       "get_document",
       "list_projects",
@@ -22,6 +23,7 @@ describe("buildTools", () => {
       "search_code",
       "search_confluence",
       "search_jira",
+      "status",
       "who_knows",
     ]);
     for (const t of tools) expect(t.description.length).toBeGreaterThan(10);
@@ -34,6 +36,7 @@ describe("buildTools", () => {
       tools.map((t) => [t.name, t.params.map((p) => p.name).sort()]),
     );
     expect(params.list_projects).toEqual([]);
+    expect(params.status).toEqual([]);
     expect(params.search).toEqual(["limit", "project", "query"]);
     expect(params.search_confluence).toEqual(["limit", "query"]);
     expect(params.search_jira).toEqual(["limit", "query"]);
@@ -127,6 +130,36 @@ describe("buildTools", () => {
   it("get_document resolves a bare id when unambiguous", async () => {
     const rows = await get("get_document").run({ uri: "HEL-482" });
     expect(rows[0].source).toBe("jira");
+  });
+
+  it("codeLinks keeps only refs that name a real file", () => {
+    const links = codeLinks(
+      {
+        code_refs: [
+          "src/checkpoint/loader.ts",
+          "HELIOS_PREFETCH_DEPTH",
+          "src/serving",
+          "../../../etc/passwd",
+        ],
+      },
+      join(ROOT, "fixtures"),
+    );
+    expect(links).toEqual(["github://helios/src/checkpoint/loader.ts"]);
+    expect(codeLinks({ code_refs: ["src/checkpoint/loader.ts"] })).toEqual([]);
+  });
+
+  it("status reports every ingested source with counts", async () => {
+    const rows = await get("status").run({});
+    expect(rows.map((r) => r.title).sort()).toEqual([
+      "bucket",
+      "confluence",
+      "github",
+      "jira",
+    ]);
+    for (const r of rows) {
+      expect(r.source).toBe("meta");
+      expect(r.content).toMatch(/\d+ docs, \d+% distilled/);
+    }
   });
 
   it("get_document explains itself on an unknown uri", async () => {

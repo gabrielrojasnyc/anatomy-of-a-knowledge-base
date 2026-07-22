@@ -46,6 +46,18 @@
     { "id": "abstain-windows", "project": "helios-eng",
       "question": "Does Helios ship Windows builds?",
       "note": "No fixture discusses Windows. The right behavior is a low score on everything, not a confident wrong citation.",
-      "expectAbstain": true }
+      "expectAbstain": true },
+    { "id": "hop-restore-stall", "project": "helios-eng",
+      "question": "Why does checkpoint restore stall after manifest load?",
+      "note": "Distillation extracts code_refs from the thread; retrieval surfaces the real ones as links. Graded end to end: search surfaces the ticket, its link dereferences to the loader, the loader names the flag.",
+      "expectHop": {
+        "from": { "source": "jira", "sourceIdPrefix": "HEL-482" },
+        "terminal": { "source": "github", "contentIncludes": "HELIOS_PREFETCH_DEPTH" } } },
+    { "id": "hop-manifest-timeout", "project": "helios-eng",
+      "question": "What does ERR_MANIFEST_TIMEOUT mean and how do I fix it?",
+      "note": "Second hop shape: incident ticket to the fetcher that raises the error.",
+      "expectHop": {
+        "from": { "source": "jira", "sourceIdPrefix": "HEL-530" },
+        "terminal": { "source": "github", "contentIncludes": "ERR_MANIFEST_TIMEOUT" } } }
   ]
 }

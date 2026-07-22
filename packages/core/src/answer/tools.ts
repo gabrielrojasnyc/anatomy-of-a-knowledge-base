@@ -7,6 +7,7 @@ import { fuse } from "../retrieval/rrf.js";
 import { search } from "../retrieval/search.js";
 import { expandDoc } from "../retrieval/expand.js";
 import { getDocument } from "../retrieval/get.js";
+import { codeLinks } from "../retrieval/links.js";
 import type { EvidenceRow } from "../retrieval/types.js";
 
 type Llm = (o: {
@@ -73,6 +74,7 @@ async function sourceSearch(
     const authors = ((f.doc.metadata.authors as string[]) ?? []).filter(
       (a) => a !== "unknown",
     );
+    const links = codeLinks(f.doc.metadata, opts.fixturesDir);
     out.push({
       content: await expandDoc(pool, f.doc, { fixturesDir: opts.fixturesDir }),
       source: f.doc.source,
@@ -84,6 +86,7 @@ async function sourceSearch(
       scoreKind: "fused",
       retrieverAgreement: f.contributions.length,
       ...(authors.length ? { authors } : {}),
+      ...(links.length ? { links } : {}),
       recency: f.doc.authoredAt
         ? f.doc.authoredAt.toISOString().slice(0, 10)
         : null,
@@ -254,6 +257,49 @@ export function buildTools(
             recency: null,
             tool: "who_knows",
           }));
+      },
+    },
+    {
+      name: "status",
+      description:
+        "Corpus readiness: per-source document counts, distilled fraction, newest document date. " +
+        "Call this when results look empty or stale: an empty store means nothing was ingested, not that no evidence exists.",
+      params: [],
+      run: async () => {
+        const { rows } = await pool.query(
+          `SELECT source, count(*)::int AS docs,
+                  round(avg((metadata->>'distilled')::boolean::int) * 100)::int AS distilled_pct,
+                  max(authored_at) AS newest
+             FROM embeddings GROUP BY source ORDER BY source`,
+        );
+        if (rows.length === 0)
+          return [
+            {
+              content:
+                "empty store: nothing ingested yet. Run pnpm kb ingest from the repo root, then retry.",
+              source: "meta",
+              sourceId: "status",
+              title: "empty store",
+              url: "status://empty",
+              score: 0,
+              recency: null,
+              tool: "status",
+            },
+          ];
+        return rows.map((r) => ({
+          content:
+            `${r.source}: ${r.docs} docs, ${r.distilled_pct ?? 0}% distilled` +
+            (r.newest
+              ? `, newest ${new Date(r.newest as string).toISOString().slice(0, 10)}`
+              : ""),
+          source: "meta",
+          sourceId: `status:${r.source}`,
+          title: r.source as string,
+          url: `status://${r.source}`,
+          score: 1,
+          recency: null,
+          tool: "status",
+        }));
       },
     },
     {

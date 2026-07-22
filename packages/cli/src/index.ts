@@ -130,21 +130,31 @@ program
     "print each retriever list, the RRF table, and rerank scores",
   )
   .option("--no-llm", "skip the rerank step")
+  .option("--json", "emit the evidence and trace as JSON for machine callers")
   .action(
     async (
       query: string,
-      opts: { project?: string; explain?: boolean; llm: boolean },
+      opts: {
+        project?: string;
+        explain?: boolean;
+        llm: boolean;
+        json?: boolean;
+      },
     ) => {
       const pool = getPool();
       try {
         const llm = llmOrUndefined(opts.llm);
         if (opts.llm && !llm)
-          console.log(pc.yellow("no CEREBRAS_API_KEY: rerank skipped"));
+          console.error(pc.yellow("no CEREBRAS_API_KEY: rerank skipped"));
         const { evidence, trace } = await search(pool, query, {
           project: opts.project,
           llm,
           fixturesDir: FIXTURES,
         });
+        if (opts.json) {
+          console.log(JSON.stringify({ evidence, trace }, null, 2));
+          return;
+        }
         if (opts.explain) {
           for (const list of trace.lists) {
             console.log(pc.bold(`\n[${list.name}]`));
@@ -193,10 +203,15 @@ program
 program
   .command("get <uri>")
   .description("Fetch the full document behind a result url or bare id")
-  .action(async (uri: string) => {
+  .option("--json", "emit the document row as JSON for machine callers")
+  .action(async (uri: string, opts: { json?: boolean }) => {
     const pool = getPool();
     try {
       const doc = await getDocument(pool, uri, { fixturesDir: FIXTURES });
+      if (opts.json) {
+        console.log(JSON.stringify(doc, null, 2));
+        return;
+      }
       console.log(pc.cyan(doc.title ?? doc.sourceId) + pc.dim(` (${doc.url})`));
       if (doc.authors?.length)
         console.log(pc.dim(`authors: ${doc.authors.join(", ")}`));
@@ -214,17 +229,22 @@ program
   .description("Planner, executor, synthesis: a cited answer")
   .option("--project <name>", "scope to a project")
   .option("--trace", "print the planner decision and evidence table")
+  .option("--json", "emit the answer, evidence, and plan as JSON")
   .action(
-    async (question: string, opts: { project?: string; trace?: boolean }) => {
+    async (
+      question: string,
+      opts: { project?: string; trace?: boolean; json?: boolean },
+    ) => {
       const pool = getPool();
       try {
         const llm = llmOrUndefined(true);
         if (!llm) {
-          console.log(
+          console.error(
             pc.red(
               "kb ask needs CEREBRAS_API_KEY (retrieval-only mode: use kb search)",
             ),
           );
+          process.exitCode = 1;
           return;
         }
         const result = await ask(pool, question, {
@@ -232,6 +252,10 @@ program
           fixturesDir: FIXTURES,
           llm,
         });
+        if (opts.json) {
+          console.log(JSON.stringify(result, null, 2));
+          return;
+        }
         if (opts.trace) {
           console.log(
             pc.bold("[planner] ") +
