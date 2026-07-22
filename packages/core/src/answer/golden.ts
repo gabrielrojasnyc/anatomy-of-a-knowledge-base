@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import type pg from "pg";
 import { search } from "../retrieval/search.js";
+import { getDocument } from "../retrieval/get.js";
 import { buildTools } from "./tools.js";
 
 type Llm = (o: {
@@ -18,6 +19,16 @@ export interface GoldenQuestion {
   expectPeople?: string[];
   /** The corpus cannot answer this; retrieval must not pretend otherwise. */
   expectAbstain?: boolean;
+  /**
+   * A two-step trajectory graded on terminal evidence: search must surface
+   * the `from` row, and following that row's links through get_document must
+   * land on the terminal artifact. This is the agent's investigation shape
+   * (search, then get) tested end to end, not stage by stage.
+   */
+  expectHop?: {
+    from: { source: string; sourceIdPrefix: string };
+    terminal: { source: string; contentIncludes: string };
+  };
 }
 
 export interface Grade {
@@ -80,6 +91,72 @@ export async function gradeQuestion(
       );
     } else {
       details.push(`all ${reranked.length} rows at or below 3/10`);
+    }
+  }
+
+  if (q.expectHop) {
+    // Links come from distillation's code_refs; a raw-text corpus has none,
+    // so probe for the capability before grading against it.
+    const { rows: cap } = await pool.query(
+      `SELECT 1 FROM embeddings
+        WHERE source = 'jira' AND jsonb_array_length(metadata->'code_refs') > 0
+        LIMIT 1`,
+    );
+    if (cap.length === 0)
+      return {
+        id: q.id,
+        pass: true,
+        skipped: true,
+        details: [
+          "skipped: no code_refs in store (hop needs a distilled corpus)",
+        ],
+      };
+    const { evidence } = await search(pool, q.question, {
+      project: q.project,
+      llm: opts.llm,
+      fixturesDir: opts.fixturesDir,
+    });
+    const { from, terminal } = q.expectHop;
+    const start = evidence.find(
+      (r) =>
+        r.source === from.source && r.sourceId.startsWith(from.sourceIdPrefix),
+    );
+    if (!start) {
+      pass = false;
+      details.push(
+        `hop start ${from.source}:${from.sourceIdPrefix} not surfaced`,
+      );
+    } else if (!start.links?.length) {
+      pass = false;
+      details.push(`${start.sourceId} surfaced without links`);
+    } else {
+      let landed: string | null = null;
+      for (const link of start.links) {
+        try {
+          const doc = await getDocument(pool, link, {
+            fixturesDir: opts.fixturesDir,
+          });
+          if (
+            doc.source === terminal.source &&
+            doc.content.includes(terminal.contentIncludes)
+          ) {
+            landed = link;
+            break;
+          }
+        } catch {
+          // A dead link is a grading failure, not a crash: fall through.
+        }
+      }
+      if (landed) {
+        details.push(
+          `${start.sourceId} -> ${landed} contains "${terminal.contentIncludes}"`,
+        );
+      } else {
+        pass = false;
+        details.push(
+          `no link from ${start.sourceId} reached ${terminal.source} containing "${terminal.contentIncludes}"`,
+        );
+      }
     }
   }
 

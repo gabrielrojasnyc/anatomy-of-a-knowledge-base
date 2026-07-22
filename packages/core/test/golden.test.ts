@@ -17,17 +17,20 @@ describe("golden questions, retrieval only, raw-text corpus", () => {
     { timeout: 300_000 },
     async () => {
       const questions = loadGolden(join(ROOT, "eval/golden.json"));
-      expect(questions).toHaveLength(12);
+      expect(questions).toHaveLength(14);
       const grades = [];
       for (const q of questions)
         grades.push(
           await gradeQuestion(pool, q, { fixturesDir: join(ROOT, "fixtures") }),
         );
-      // Abstention questions need rerank, so a retrieval-only run skips them.
+      // Abstention needs rerank and hops need distilled code_refs, so the
+      // retrieval-only raw-text corpus skips both pairs.
       const skipped = grades.filter((g) => g.skipped);
       expect(skipped.map((g) => g.id).sort()).toEqual([
         "abstain-kubernetes",
         "abstain-windows",
+        "hop-manifest-timeout",
+        "hop-restore-stall",
       ]);
       const failed = grades.filter((g) => !g.skipped && !g.pass);
       expect(
