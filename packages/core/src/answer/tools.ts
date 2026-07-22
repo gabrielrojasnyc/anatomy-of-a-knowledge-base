@@ -5,6 +5,8 @@ import { embedQuery } from "../models/embeddings.js";
 import { ftsRetriever, vectorRetriever } from "../retrieval/retrievers.js";
 import { fuse } from "../retrieval/rrf.js";
 import { search } from "../retrieval/search.js";
+import { expandDoc } from "../retrieval/expand.js";
+import { getDocument } from "../retrieval/get.js";
 import type { EvidenceRow } from "../retrieval/types.js";
 
 type Llm = (o: {
@@ -13,11 +15,37 @@ type Llm = (o: {
   user: string;
 }) => Promise<string>;
 
+/**
+ * Each tool declares exactly the parameters it reads: the MCP server builds
+ * its input schema from this list, so the schema an agent sees is the contract
+ * the code enforces. A tool that ignores a parameter must not advertise it.
+ */
+export interface ToolParam {
+  name: "query" | "project" | "limit" | "uri";
+  required?: boolean;
+  max?: number;
+  description: string;
+}
+
+export interface ToolArgs {
+  query?: string;
+  project?: string;
+  limit?: number;
+  uri?: string;
+}
+
 export interface Tool {
   name: string;
   description: string;
-  run(args: { query: string; project?: string }): Promise<EvidenceRow[]>;
+  params: ToolParam[];
+  run(args: ToolArgs): Promise<EvidenceRow[]>;
 }
+
+const QUERY: ToolParam = {
+  name: "query",
+  required: true,
+  description: "What to look for",
+};
 
 function walk(dir: string, base: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -33,25 +61,36 @@ async function sourceSearch(
   pool: pg.Pool,
   source: string,
   query: string,
+  opts: { fixturesDir: string; limit?: number },
 ): Promise<EvidenceRow[]> {
   const qvec = await embedQuery(query);
   const lists = await Promise.all([
     ftsRetriever(pool, query, { sources: [source], limit: 20 }),
     vectorRetriever(pool, qvec, { sources: [source], limit: 20 }),
   ]);
-  return fuse(lists, { limit: 5 }).map((f) => ({
-    content: f.doc.content,
-    source: f.doc.source,
-    sourceId: f.doc.sourceId,
-    title: f.doc.title,
-    url:
-      (f.doc.metadata.url as string) ?? `${f.doc.source}://${f.doc.sourceId}`,
-    score: f.score,
-    recency: f.doc.authoredAt
-      ? f.doc.authoredAt.toISOString().slice(0, 10)
-      : null,
-    tool: `search_${source}`,
-  }));
+  const out: EvidenceRow[] = [];
+  for (const f of fuse(lists, { limit: opts.limit ?? 5 })) {
+    const authors = ((f.doc.metadata.authors as string[]) ?? []).filter(
+      (a) => a !== "unknown",
+    );
+    out.push({
+      content: await expandDoc(pool, f.doc, { fixturesDir: opts.fixturesDir }),
+      source: f.doc.source,
+      sourceId: f.doc.sourceId,
+      title: f.doc.title,
+      url:
+        (f.doc.metadata.url as string) ?? `${f.doc.source}://${f.doc.sourceId}`,
+      score: f.score,
+      scoreKind: "fused",
+      retrieverAgreement: f.contributions.length,
+      ...(authors.length ? { authors } : {}),
+      recency: f.doc.authoredAt
+        ? f.doc.authoredAt.toISOString().slice(0, 10)
+        : null,
+      tool: `search_${source}`,
+    });
+  }
+  return out;
 }
 
 export function buildTools(
@@ -63,10 +102,17 @@ export function buildTools(
     {
       name: "search",
       description:
-        "Hybrid search across all sources in scope: use for most questions.",
-      run: ({ query, project }) =>
-        search(pool, query, {
+        "Hybrid search across all sources in scope: use for most questions. " +
+        "Follow any result's url with get_document to read the full artifact.",
+      params: [
+        QUERY,
+        { name: "project", description: "Optional project scope" },
+        { name: "limit", max: 20, description: "Max rows (default 10)" },
+      ],
+      run: ({ query, project, limit }) =>
+        search(pool, query ?? "", {
           project,
+          limit,
           llm: opts.llm,
           fixturesDir: opts.fixturesDir,
         }).then((r) => r.evidence),
@@ -74,19 +120,40 @@ export function buildTools(
     {
       name: "search_confluence",
       description: "Wiki only: runbooks, RFCs, onboarding, policy pages.",
-      run: ({ query }) => sourceSearch(pool, "confluence", query),
+      params: [
+        QUERY,
+        { name: "limit", max: 20, description: "Max rows (default 5)" },
+      ],
+      run: ({ query, limit }) =>
+        sourceSearch(pool, "confluence", query ?? "", {
+          fixturesDir: opts.fixturesDir,
+          limit,
+        }),
     },
     {
       name: "search_jira",
       description:
         "Issue tracker only: incidents, bugs, decisions and their resolutions.",
-      run: ({ query }) => sourceSearch(pool, "jira", query),
+      params: [
+        QUERY,
+        { name: "limit", max: 20, description: "Max rows (default 5)" },
+      ],
+      run: ({ query, limit }) =>
+        sourceSearch(pool, "jira", query ?? "", {
+          fixturesDir: opts.fixturesDir,
+          limit,
+        }),
     },
     {
       name: "search_code",
       description:
         "Exact text search over the Helios codebase: flags, error strings, function names. Prefix with re: for regex.",
-      run: async ({ query }) => {
+      params: [
+        QUERY,
+        { name: "limit", max: 50, description: "Max rows (default 50)" },
+      ],
+      run: async ({ query = "", limit }) => {
+        const cap = limit ?? 50;
         const raw = query.startsWith("re:") ? query.slice(3) : null;
         let re: RegExp;
         if (raw !== null) {
@@ -99,11 +166,13 @@ export function buildTools(
           re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
         }
         const out: EvidenceRow[] = [];
+        let matched = 0;
         for (const rel of walk(codeRoot, codeRoot).sort()) {
-          if (out.length >= 50) break;
           const lines = readFileSync(join(codeRoot, rel), "utf8").split("\n");
-          for (let i = 0; i < lines.length && out.length < 50; i++) {
+          for (let i = 0; i < lines.length; i++) {
             if (!re.test(lines[i])) continue;
+            matched++;
+            if (out.length >= cap) continue;
             const ctx = lines.slice(Math.max(0, i - 2), i + 3).join("\n");
             out.push({
               content: ctx,
@@ -117,14 +186,46 @@ export function buildTools(
             });
           }
         }
+        if (matched > out.length)
+          out.push({
+            content: `matched ${matched} lines; showing the first ${out.length}. Narrow the query or raise limit (max 50).`,
+            source: "meta",
+            sourceId: "truncated",
+            title: "match limit reached",
+            url: "meta://truncated",
+            score: 0,
+            recency: null,
+            tool: "search_code",
+          });
         return out;
       },
+    },
+    {
+      name: "get_document",
+      description:
+        "Fetch the complete document behind any result url: the whole JIRA thread with every comment, " +
+        "all sections of a wiki page or doc, or an entire source file. " +
+        "Use it to follow a citation instead of re-searching.",
+      params: [
+        {
+          name: "uri",
+          required: true,
+          description:
+            "The url field of any result (jira://HEL-482, confluence://HELIOS/HEL-008, " +
+            "bucket://file.md, github://helios/src/path.ts) or a bare id like HEL-482",
+        },
+      ],
+      run: ({ uri, query }) =>
+        getDocument(pool, uri ?? query ?? "", {
+          fixturesDir: opts.fixturesDir,
+        }).then((r) => [r]),
     },
     {
       name: "who_knows",
       description:
         "Find people with demonstrated expertise on a topic, ranked by evidence.",
-      run: async ({ query }) => {
+      params: [{ ...QUERY, description: "Topic to find experts on" }],
+      run: async ({ query = "" }) => {
         const qvec = await embedQuery(query);
         const lists = await Promise.all([
           ftsRetriever(pool, query, { limit: 30 }),
@@ -159,6 +260,7 @@ export function buildTools(
       name: "list_projects",
       description:
         "List the available projects and which sources each one scopes to.",
+      params: [],
       run: async () => {
         const { rows } = await pool.query(
           `SELECT p.name, p.description, array_agg(ps.source ORDER BY ps.source) AS sources

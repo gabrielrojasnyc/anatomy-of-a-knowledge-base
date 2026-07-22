@@ -26,10 +26,11 @@ export {
 export { fuse, parentKey } from "./retrieval/rrf.js";
 export { rerank } from "./retrieval/rerank.js";
 export { expandDoc } from "./retrieval/expand.js";
+export { getDocument } from "./retrieval/get.js";
 export { search } from "./retrieval/search.js";
 export type { SearchResult, SearchTrace } from "./retrieval/search.js";
 export { buildTools } from "./answer/tools.js";
-export type { Tool } from "./answer/tools.js";
+export type { Tool, ToolParam, ToolArgs } from "./answer/tools.js";
 export { plan } from "./answer/planner.js";
 export { ask, askStream } from "./answer/ask.js";
 export type { AskResult, AskStage } from "./answer/ask.js";

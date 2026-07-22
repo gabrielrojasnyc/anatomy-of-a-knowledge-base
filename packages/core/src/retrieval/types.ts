@@ -22,6 +22,11 @@ export interface EvidenceRow {
   title: string | null;
   url: string;
   score: number;
+  /** What the score means: an RRF sum (~0.01 to 0.1) or an LLM rerank grade (0 to 10). */
+  scoreKind?: "fused" | "reranked";
+  /** How many retrievers independently surfaced this row. */
+  retrieverAgreement?: number;
+  authors?: string[];
   recency: string | null;
   tool: string;
 }

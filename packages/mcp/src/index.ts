@@ -12,5 +12,5 @@ if (!existsSync(fixturesDir)) {
   process.exit(1);
 }
 
-const server = createKbServer(getPool(), fixturesDir);
+const server = await createKbServer(getPool(), fixturesDir);
 await server.connect(new StdioServerTransport());

@@ -108,6 +108,9 @@ export async function search(
       sourceId: f.doc.sourceId,
       addedChars: content.length - f.doc.content.length,
     });
+    const authors = ((f.doc.metadata.authors as string[]) ?? []).filter(
+      (a) => a !== "unknown",
+    );
     evidence.push({
       content,
       source: f.doc.source,
@@ -118,6 +121,9 @@ export async function search(
       score: applied
         ? (rerankScores.get(`${f.doc.source}:${f.doc.sourceId}`) ?? 0)
         : f.score,
+      scoreKind: applied ? "reranked" : "fused",
+      retrieverAgreement: f.contributions.length,
+      ...(authors.length ? { authors } : {}),
       recency: f.doc.authoredAt
         ? f.doc.authoredAt.toISOString().slice(0, 10)
         : null,
