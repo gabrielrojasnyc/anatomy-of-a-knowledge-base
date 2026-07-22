@@ -80,7 +80,7 @@ export function meetingsConnector(dir: string): Connector {
 }
 ```
 
-That's 68 lines and it reuses every pattern the existing connectors already established: `distillSection`-style degrade-to-raw-text on failure, `metadata.authors` for `who_knows`, a fake but consistent `url` scheme for citations. Note the `kind` is `"doc_section"`, an existing value in the `EmbeddingInsert` union, not a new one; introducing a real new content shape (meetings aren't quite a page section or an issue thread) would mean extending that union in `schema/types.ts`, a genuine schema decision worth making deliberately rather than defaulting to the nearest existing tag.
+That's 59 lines and it reuses every pattern the existing connectors already established: `distillSection`-style degrade-to-raw-text on failure, `metadata.authors` for `who_knows`, a fake but consistent `url` scheme for citations. Note the `kind` is `"doc_section"`, an existing value in the `EmbeddingInsert` union, not a new one; introducing a real new content shape (meetings aren't quite a page section or an issue thread) would mean extending that union in `schema/types.ts`, a genuine schema decision worth making deliberately rather than defaulting to the nearest existing tag.
 
 ## Wiring it in
 
@@ -105,7 +105,7 @@ The first command runs only the new connector (`--source` filters `defaultConnec
 
 ## Checklist before shipping a real connector
 
-- **Shape**: does every `DistilledDoc` set all seven fields (`source`, `sourceId`, `kind`, `title`, `content`, `raw`, `metadata`) and match an existing `kind`, or does the new content genuinely need a schema change?
+- **Shape**: does every `DistilledDoc` set all eight fields (`source`, `sourceId`, `kind`, `title`, `content`, `raw`, `metadata`, `authoredAt`) and match an existing `kind`, or does the new content genuinely need a schema change?
 - **Hash stability**: `content_hash` is computed from distilled `content`, and LLM output isn't byte-stable across runs; know that unchanged source data can still re-embed on a repeat ingest (`docs/02-ingestion.md`).
 - **`authoredAt`**: a real `Date`, not `null` by default. It drives the recency retriever's exponential decay, and a new source needs a deliberate entry in `HALF_LIFE_DAYS` (`docs/04-retrieval.md`) or it silently inherits the 365-day fallback.
 - **Authors**: populate `metadata.authors` as a plain `string[]` of names, or `who_knows` has nothing to aggregate for this source.

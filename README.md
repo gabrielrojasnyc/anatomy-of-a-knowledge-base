@@ -101,7 +101,7 @@ Embeddings are local and free: `Xenova/bge-small-en-v1.5` via `@huggingface/tran
 | [06-answer](docs/06-answer.md) | planner, executor, synthesis, and a real trust-boundary callout |
 | [07-surfaces](docs/07-surfaces.md) | CLI, MCP, web UI, and what degrades without a key |
 | [08-scaling](docs/08-scaling.md) | every demo simplification, named, next to its production fix |
-| [09-write-your-own-connector](docs/09-write-your-own-connector.md) | a fifth source, in about 80 lines |
+| [09-write-your-own-connector](docs/09-write-your-own-connector.md) | a fifth source, in under 60 lines |
 
 ## What this is not
 
