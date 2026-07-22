@@ -109,8 +109,8 @@ describe("ask", () => {
         });
       return "streamed answer [1]";
     };
-    const stages: string[] = [];
     const { askStream } = await import("../src/answer/ask.js");
+    const events: import("../src/answer/ask.js").AskStage[] = [];
     const result = await askStream(
       pool,
       "what is ERR_MANIFEST_TIMEOUT?",
@@ -118,9 +118,19 @@ describe("ask", () => {
         fixturesDir: join(ROOT, "fixtures"),
         llm,
       },
-      (e) => stages.push(e.stage),
+      (e) => events.push(e),
     );
-    expect(stages).toEqual(["plan", "evidence", "answer"]);
+    expect(events.map((e) => e.stage)).toEqual(["plan", "evidence", "answer"]);
     expect(result.answer).toContain("streamed answer");
+
+    // The answer stage carries the authoritative, deduped evidence array
+    // used for the synthesis prompt, so citation numbering in every
+    // consumer (web UI, MCP) can be derived from it instead of
+    // reconstructing arrival order.
+    const answerEvent = events.find((e) => e.stage === "answer");
+    if (answerEvent?.stage !== "answer") throw new Error("no answer event");
+    expect(answerEvent.evidence.length).toBeGreaterThan(0);
+    const keys = answerEvent.evidence.map((e) => `${e.source}:${e.sourceId}`);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

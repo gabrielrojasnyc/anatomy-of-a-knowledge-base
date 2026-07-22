@@ -29,7 +29,7 @@ export interface AskResult {
 export type AskStage =
   | { stage: "plan"; plan: AskResult["plan"] }
   | { stage: "evidence"; tool: string; rows: EvidenceRow[] }
-  | { stage: "answer"; text: string };
+  | { stage: "answer"; text: string; evidence: EvidenceRow[] };
 
 export async function askStream(
   pool: pg.Pool,
@@ -101,7 +101,7 @@ export async function askStream(
           system: SYNTHESIS_SYSTEM,
           user: `<question>${question}</question>\n${numbered}`,
         });
-  emit({ stage: "answer", text: answer });
+  emit({ stage: "answer", text: answer, evidence });
 
   return { answer, evidence, plan: p };
 }

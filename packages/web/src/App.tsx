@@ -24,7 +24,7 @@ interface EvidenceStage {
 type Stage =
   | { kind: "plan"; plan: PlanStage }
   | { kind: "evidence"; tool: string; rows: EvidenceRow[] }
-  | { kind: "answer"; text: string };
+  | { kind: "answer"; text: string; evidence: EvidenceRow[] };
 
 interface Project {
   sourceId: string;
@@ -43,28 +43,28 @@ function badgeFor(source: string): string {
   return SOURCE_BADGE[source] ?? source.slice(0, 2);
 }
 
-// Flat, numbered, de-duped evidence list in arrival order, mirroring
-// askStream's `source:sourceId` dedupe so `[n]` in the answer lines up
-// with the same row the synthesis prompt cited. `citations` maps each
-// key to its 1-based number; a row missing from the map is a duplicate
-// of an earlier row (possible when the plan picks overlapping tools,
-// e.g. "search" plus "search_confluence") and carries no citation of
-// its own.
-function numberEvidence(stages: Stage[]): {
+// Citation numbering is authoritative on the backend: askStream numbers
+// evidence in the order it assembles the synthesis prompt (deduped by
+// `source:sourceId`, capped), and the answer stage carries that exact
+// array. SSE arrival order for evidence stages can differ whenever a
+// later-planned tool's results land first, so `[n]` in the answer text
+// and the footnote list are derived from the answer stage's evidence,
+// not reconstructed from evidence-stage arrival order. Evidence cards
+// still render per evidence stage in arrival order for the live effect;
+// only this number -> row mapping (used to scroll/flash the matching
+// rendered row by `source:sourceId`) comes from the authoritative array.
+function citationsFromAnswer(stages: Stage[]): {
   numbered: EvidenceRow[];
   citations: Map<string, number>;
 } {
+  const answerStage = stages.find(
+    (s): s is Extract<Stage, { kind: "answer" }> => s.kind === "answer",
+  );
+  const numbered = answerStage?.evidence ?? [];
   const citations = new Map<string, number>();
-  const numbered: EvidenceRow[] = [];
-  for (const stage of stages) {
-    if (stage.kind !== "evidence") continue;
-    for (const row of stage.rows) {
-      const key = `${row.source}:${row.sourceId}`;
-      if (citations.has(key)) continue;
-      numbered.push(row);
-      citations.set(key, numbered.length);
-    }
-  }
+  numbered.forEach((row, i) => {
+    citations.set(`${row.source}:${row.sourceId}`, i + 1);
+  });
   return { numbered, citations };
 }
 
@@ -273,7 +273,7 @@ export default function App() {
 
   useEffect(() => () => sourceRef.current?.close(), []);
 
-  const { numbered, citations } = numberEvidence(stages);
+  const { numbered, citations } = citationsFromAnswer(stages);
   const hasAnswer = stages.some((s) => s.kind === "answer");
 
   function submit(e: FormEvent) {
@@ -306,8 +306,14 @@ export default function App() {
       ]);
     });
     es.addEventListener("answer", (ev) => {
-      const data = JSON.parse((ev as MessageEvent).data) as { text: string };
-      setStages((prev) => [...prev, { kind: "answer", text: data.text }]);
+      const data = JSON.parse((ev as MessageEvent).data) as {
+        text: string;
+        evidence: EvidenceRow[];
+      };
+      setStages((prev) => [
+        ...prev,
+        { kind: "answer", text: data.text, evidence: data.evidence },
+      ]);
     });
     es.addEventListener("done", () => {
       es.close();
